@@ -1,4 +1,4 @@
-import { InputPluginOption, OutputOptions, RollupBuild, RollupOptions } from 'rollup'
+import { OutputOptions, RollupBuild, RollupOptions, RollupWatcher, RollupWatcherEvent } from 'rollup'
 import SwiftletTask from './SwiftletTask'
 
 class RollupTask extends SwiftletTask {
@@ -14,9 +14,31 @@ class RollupTask extends SwiftletTask {
     let bundle: RollupBuild | undefined
     let buildFailed = false
     try {
-      const { rollup } = await import('rollup')
-      bundle = await rollup(options)
-      await this.generateOutputs(bundle)
+      // watch 模式：使用 rollup.watch
+      const hasWatch = Object.prototype.hasOwnProperty.call(options as object, 'watch')
+      if (hasWatch) {
+        const { watch } = await import('rollup')
+        const watcher: RollupWatcher = watch(options as unknown as import('rollup').RollupWatchOptions)
+        watcher.on('event', (event: RollupWatcherEvent) => {
+          switch (event.code) {
+            case 'START':
+            case 'BUNDLE_START':
+            case 'BUNDLE_END':
+            case 'END':
+              break
+            case 'ERROR':
+              buildFailed = true
+              console.error((event as { code: 'ERROR'; error: unknown }).error)
+              break
+          }
+        })
+        // 进入 watch 后，立即返回（不中断进程）
+        return false
+      } else {
+        const { rollup } = await import('rollup')
+        bundle = await rollup(options)
+        await this.generateOutputs(bundle)
+      }
     } catch (error) {
       buildFailed = true
       console.error(error)

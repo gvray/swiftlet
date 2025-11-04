@@ -1,0 +1,12 @@
+{
+  "name": "swiftlet-example-library-js",
+  "description": "Swiftlet example: JavaScript library build (ESM/CJS/UMD)",
+  "scripts": {
+    "build": "swiftlet build"
+  },
+  "dependencies": {
+    "@gvray/eskit": "^1.2.0",
+    "@gvray/mathkit": "^1.0.1",
+    "swiftlet": "workspace:*"
+  }
+}

@@ -1,5 +1,5 @@
 import path from 'path'
-import { RollupOptions, OutputOptions, defineConfig, InputPluginOption, ModuleFormat } from 'rollup'
+import { RollupOptions, OutputOptions, defineConfig, InputPluginOption, ModuleFormat, RollupWatchOptions } from 'rollup'
 import terser from '@rollup/plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 import dts from 'rollup-plugin-dts'
@@ -51,6 +51,8 @@ export async function createRollupOptions(options: SwiftletOptions): Promise<Rol
 
   const configs: RollupOptions[] = []
 
+  const { watch } = options
+
   if (isTypeScript()) {
     output.forEach((item) => {
       configs.push({
@@ -67,7 +69,8 @@ export async function createRollupOptions(options: SwiftletOptions): Promise<Rol
             }
           })
         ],
-        ...rollupOptions // TODO merge plugins
+        ...rollupOptions, // TODO merge plugins
+        ...(watch ? ({ watch: {} } as RollupWatchOptions) : {})
       })
     })
   } else {
@@ -75,7 +78,8 @@ export async function createRollupOptions(options: SwiftletOptions): Promise<Rol
       input,
       output,
       plugins: [...plugins, ...innerPlugins],
-      ...rollupOptions // TODO merge plugins
+      ...rollupOptions, // TODO merge plugins
+      ...(watch ? ({ watch: {} } as RollupWatchOptions) : {})
     })
   }
 

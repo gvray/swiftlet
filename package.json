@@ -4,14 +4,26 @@
   "description": "Web dev build tool",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./cli": {
+      "require": "./dist/cli/cli.js"
+    },
+    "./plugins/LoadingPlugin": {
+      "require": "./dist/plugins/LoadingPlugin.js",
+      "types": "./dist/plugins/LoadingPlugin.d.ts"
+    }
+  },
   "bin": {
     "swiftlet": "bin/swiftlet.js"
   },
   "scripts": {
-    "dev": "npx ts-node ./src/index.ts",
-    "build:es": "rm -rf ./dist/* && rm -rf ./types/* && npx tsc",
-    "build": "rimraf dist && pnpm tsc",
-    "dev:watch": "pnpm build --watch",
+    "dev": "ts-node ./src/cli/cli.ts dev",
+    "build": "rimraf dist && tsc",
+    "build:watch": "tsc -w",
     "format": "prettier --write . && npx eslint src --ext .js,.ts",
     "test": "jest"
   },
@@ -29,22 +41,25 @@
     "bundling",
     "swiftlet"
   ],
-  "author": "GavinBirkhoff <gavinbirkhoff@gmail.com> (https://github.com/gavinbirkhoff)",
+  "author": "GavinRay <gavinbirkhoff@gmail.com> (https://github.com/gvray)",
   "license": "MIT",
   "engines": {
     "node": ">=17.0.0"
   },
   "bugs": {
-    "url": "https://github.com/GavinBirkhoff/swiftlet/issues"
+    "url": "https://github.com/gvray/swiftlet/issues"
   },
-  "homepage": "https://github.com/GavinBirkhoff/swiftlet#readme",
+  "homepage": "https://github.com/gvray/swiftlet#readme",
   "devDependencies": {
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.10.1",
+    "@types/jest": "^29.5.12",
     "eslint-config-lavy": "1.0.2-Alpha",
     "lavy": "1.0.2-Alpha.0",
+    "jest": "^29.7.0",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.1",
+    "ts-jest": "^29.2.5",
     "typescript": "^5.3.2"
   },
   "dependencies": {
@@ -56,6 +71,6 @@
     "rollup": "^4.6.1",
     "rollup-plugin-dts": "^6.1.0",
     "tapable": "^2.2.1",
-    "ts-copilot": "1.0.0-Beta"
+    "ora": "^7.0.1"
   }
 }

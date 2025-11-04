@@ -23,5 +23,24 @@ export async function run({ _opts = process.argv.slice(2), pck }: any) {
       }
     })
 
+  program
+    .command('dev')
+    .description('start dev build with watch and sourcemap')
+    .action(async () => {
+      try {
+        const mainConfigFile = getMainConfigFile({ cwd: appRoot })
+        if (!mainConfigFile)
+          throw Error('Check if your project is missing a configuration file (swiftlet.config.(ts|js))')
+        // 注入 shell 覆盖项：watch=true sourcemap=true
+        process.argv.push('watch=true', 'sourcemap=true')
+        const config = await import(mainConfigFile)
+        const compiler = swiftlet(config)
+        compiler.run()
+      } catch (error) {
+        console.error(error)
+        process.exit(1)
+      }
+    })
+
   program.parse()
 }

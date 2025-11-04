@@ -3,6 +3,8 @@ import swiftlet from './swiftlet'
 
 export { defineConfig } from './defineConfig'
 
-export { SwiftletOptions }
+export * from './types'
+export { default as LoadingPlugin } from './plugins/LoadingPlugin'
+export { default as Compiler } from './Compiler'
 
 export default swiftlet

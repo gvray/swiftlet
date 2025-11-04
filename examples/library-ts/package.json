@@ -1,0 +1,12 @@
+{
+  "name": "swiftlet-example-library-ts",
+  "description": "Swiftlet example: TypeScript library build (ESM/CJS/UMD + d.ts)",
+  "scripts": {
+    "build": "swiftlet build"
+  },
+  "dependencies": {
+    "@gvray/eskit": "^1.2.0",
+    "@gvray/mathkit": "^1.0.1",
+    "swiftlet": "workspace:*"
+  }
+}

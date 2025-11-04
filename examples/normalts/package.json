@@ -1,9 +1,0 @@
-{
-  "name": "example-normalts",
-  "scripts": {
-    "build": "swiftlet build"
-  },
-  "dependencies": {
-    "swiftlet": "workspace:*"
-  }
-}

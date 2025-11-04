@@ -25,5 +25,13 @@
     // "types": [],
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "**/node_modules/*"]
+  "exclude": [
+    "node_modules",
+    "**/node_modules/*",
+    "src/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.js",
+    "**/*.spec.ts",
+    "**/*.spec.js"
+  ]
 }

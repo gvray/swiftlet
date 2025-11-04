@@ -1,6 +1,6 @@
-import { OutputOptions, RollupOptions, defineConfig } from 'rollup'
+import { RollupOptions } from 'rollup'
 import RollupTask from './tasket/RollupTask'
-import { SwiftletOptions } from './types'
+import { CompilerHooks, SwiftletOptions } from './types'
 import DeleteTask from './tasket/DeleteTask'
 import path from 'node:path'
 import { SyncHook } from 'tapable'
@@ -10,7 +10,7 @@ import chalk from 'chalk'
 
 class Compiler {
   readonly inputOptions: SwiftletOptions
-  protected readonly hooks
+  public readonly hooks: CompilerHooks
 
   constructor(options: SwiftletOptions) {
     this.inputOptions = {
@@ -23,25 +23,34 @@ class Compiler {
       afterCompile: new SyncHook(), // end
       run: new SyncHook(),
       emit: new SyncHook(),
-      done: new SyncHook()
+      done: new SyncHook(),
+      status: new SyncHook<[string]>(),
+      failed: new SyncHook<[Error | undefined]>()
     }
   }
 
   async run() {
     const { outDir } = this.inputOptions
-    console.log(`clean ${outDir} ...`)
+    this.hooks.entryOption.call()
+    this.hooks.run.call()
+    this.hooks.status.call(`clean ${outDir} ...`)
     const cleanTask = new DeleteTask([path.resolve(appRoot, outDir as string)])
     await cleanTask.run()
-    console.log(chalk.green(`clean success`))
-    console.log(`build ...`)
+    this.hooks.status.call(chalk.green(`clean success`))
+    this.hooks.compile.call()
+    this.hooks.status.call(`build ...`)
     const rollupOptions: RollupOptions[] = await createRollupOptions(this.inputOptions)
     for (const options of rollupOptions) {
       const rollupTask = new RollupTask(options)
       const buildFailed = await rollupTask.run()
-      buildFailed && process.exit(1)
+      if (buildFailed) {
+        this.hooks.failed.call(undefined)
+        process.exit(1)
+      }
     }
-    console.log(chalk.green(`build success`))
-    this.hooks.done.call('done')
+    this.hooks.afterCompile.call()
+    this.hooks.status.call(chalk.green(`build success`))
+    this.hooks.done.call()
   }
 }
 
