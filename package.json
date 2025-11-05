@@ -71,6 +71,6 @@
     "rollup": "^4.6.1",
     "rollup-plugin-dts": "^6.1.0",
     "tapable": "^2.2.1",
-    "ora": "^7.0.1"
+    "ora": "^5.4.1"
   }
 }

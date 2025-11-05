@@ -9,5 +9,14 @@ module.exports = defineConfig({
   target: ['esm', 'cjs', 'umd'],
   outDir: './dist',
   // 自定义 Swiftlet 插件示例（内置 LoadingPlugin 已默认启用）
-  plugin: [new SimpleStatusPlugin()]
+  plugin: [new SimpleStatusPlugin()],
+  // external（数组形式）
+  rollupOptions: {
+    external: ['@gvray/mathkit'],
+    output: {
+      globals: {
+        '@gvray/mathkit': 'mathkit'
+      }
+    }
+  }
 })

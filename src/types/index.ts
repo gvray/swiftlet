@@ -16,14 +16,20 @@ export enum SwiftBundlesTypes {
   ESM = 'esm',
   CJS = 'cjs'
 }
+export interface StatusPayload {
+  message: string
+  scope?: string
+  phase?: 'clean' | 'build' | 'compile' | 'finalize' | string
+}
+
 export interface CompilerHooks {
   entryOption: SyncHook<[]>
-  compile: SyncHook<[]>
+  compile: SyncHook<[string]>
   afterCompile: SyncHook<[]>
   run: SyncHook<[]>
   emit: SyncHook<[]>
   done: SyncHook<[]>
-  status: SyncHook<[string]>
+  status: SyncHook<[StatusPayload]>
   failed: SyncHook<[Error | undefined]>
 }
 

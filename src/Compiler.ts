@@ -1,6 +1,6 @@
 import { RollupOptions } from 'rollup'
 import RollupTask from './tasket/RollupTask'
-import { CompilerHooks, SwiftletOptions } from './types'
+import { CompilerHooks, SwiftletOptions, StatusPayload } from './types'
 import DeleteTask from './tasket/DeleteTask'
 import path from 'node:path'
 import { SyncHook } from 'tapable'
@@ -18,14 +18,14 @@ class Compiler {
       outDir: options.outDir ?? 'dist'
     }
     this.hooks = {
-      entryOption: new SyncHook(), // start
-      compile: new SyncHook(), // compile
-      afterCompile: new SyncHook(), // end
-      run: new SyncHook(),
-      emit: new SyncHook(),
-      done: new SyncHook(),
-      status: new SyncHook<[string]>(),
-      failed: new SyncHook<[Error | undefined]>()
+      entryOption: new SyncHook<[]>([]), // start
+      compile: new SyncHook<[string]>(['format']), // compile
+      afterCompile: new SyncHook<[]>([]), // end
+      run: new SyncHook<[]>([]),
+      emit: new SyncHook<[]>([]),
+      done: new SyncHook<[]>([]),
+      status: new SyncHook<[StatusPayload]>(['payload']),
+      failed: new SyncHook<[Error | undefined]>(['error'])
     }
   }
 
@@ -33,14 +33,17 @@ class Compiler {
     const { outDir } = this.inputOptions
     this.hooks.entryOption.call()
     this.hooks.run.call()
-    this.hooks.status.call(`clean ${outDir} ...`)
+    this.hooks.status.call({ message: `clean ${outDir} ...`, scope: 'clean', phase: 'clean' })
     const cleanTask = new DeleteTask([path.resolve(appRoot, outDir as string)])
     await cleanTask.run()
-    this.hooks.status.call(chalk.green(`clean success`))
-    this.hooks.compile.call()
-    this.hooks.status.call(`build ...`)
+    this.hooks.status.call({ message: chalk.green(`clean success`), scope: 'clean', phase: 'finalize' })
+    this.hooks.status.call({ message: `build ...`, scope: 'build', phase: 'build' })
     const rollupOptions: RollupOptions[] = await createRollupOptions(this.inputOptions)
     for (const options of rollupOptions) {
+      const outputs = (options.output || []) as any
+      const firstOutput = Array.isArray(outputs) ? outputs[0] : outputs
+      const currentFormat = firstOutput?.format ?? 'unknown'
+      this.hooks.compile.call(String(currentFormat))
       const rollupTask = new RollupTask(options)
       const buildFailed = await rollupTask.run()
       if (buildFailed) {
@@ -49,7 +52,7 @@ class Compiler {
       }
     }
     this.hooks.afterCompile.call()
-    this.hooks.status.call(chalk.green(`build success`))
+    this.hooks.status.call({ message: chalk.green(`build success`), scope: 'build', phase: 'finalize' })
     this.hooks.done.call()
   }
 }

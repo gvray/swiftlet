@@ -4,9 +4,10 @@
   "scripts": {
     "build": "swiftlet build"
   },
-  "dependencies": {
-    "@gvray/eskit": "^1.2.0",
-    "@gvray/mathkit": "^1.0.1",
+  "peerDependencies": {
+    "@gvray/mathkit": "^1.0.1"
+  },
+  "devDependencies": {
     "swiftlet": "workspace:*"
   }
 }

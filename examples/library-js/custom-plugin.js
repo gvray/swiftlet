@@ -4,7 +4,7 @@ class SimpleStatusPlugin {
   }
   apply(compiler) {
     compiler.hooks.status.tap(this.name, (text) => {
-      console.log(`[status]: ${text}`)
+      // console.log(`[status]: ${text}`)
     })
   }
 }

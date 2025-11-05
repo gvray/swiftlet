@@ -7,7 +7,8 @@ class RollupTask extends SwiftletTask {
   constructor(options: RollupOptions) {
     super()
     this.rollupOptions = options
-    this.outputOptionsList = options.output as OutputOptions[]
+    const out = options.output as OutputOptions | OutputOptions[] | undefined
+    this.outputOptionsList = Array.isArray(out) ? out : out ? [out] : []
   }
 
   async build(options: RollupOptions): Promise<boolean> {
@@ -49,7 +50,7 @@ class RollupTask extends SwiftletTask {
     return buildFailed
   }
   async generateOutputs(bundle: RollupBuild) {
-    if (!this.outputOptionsList) return
+    if (!this.outputOptionsList || this.outputOptionsList.length === 0) return
     for (const outputOptions of this.outputOptionsList) {
       await bundle.write(outputOptions)
     }

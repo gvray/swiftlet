@@ -46,12 +46,25 @@ export async function createRollupOptions(options: SwiftletOptions): Promise<Rol
   } else {
     output = [genOutput(target)]
   }
+  // apply user-defined globals for UMD/IIFE from rollupOptions.output.globals
+  const configuredGlobals = (rollupOptions as any)?.output?.globals as Record<string, string> | undefined
+  if (configuredGlobals) {
+    output = output.map((item) => {
+      if (item.format === 'umd' || item.format === 'iife') {
+        return { ...item, globals: configuredGlobals }
+      }
+      return item
+    })
+  }
   // plugin
   const innerPlugins: InputPluginOption[] = [terser()]
 
   const configs: RollupOptions[] = []
 
   const { watch } = options
+
+  // avoid overriding generated output by user rollupOptions.output
+  const { output: _userOutput, ...restRollupOptions } = rollupOptions as any
 
   if (isTypeScript()) {
     output.forEach((item) => {
@@ -69,7 +82,7 @@ export async function createRollupOptions(options: SwiftletOptions): Promise<Rol
             }
           })
         ],
-        ...rollupOptions, // TODO merge plugins
+        ...restRollupOptions, // TODO merge plugins (output handled separately)
         ...(watch ? ({ watch: {} } as RollupWatchOptions) : {})
       })
     })
@@ -78,7 +91,7 @@ export async function createRollupOptions(options: SwiftletOptions): Promise<Rol
       input,
       output,
       plugins: [...plugins, ...innerPlugins],
-      ...rollupOptions, // TODO merge plugins
+      ...restRollupOptions, // TODO merge plugins (output handled separately)
       ...(watch ? ({ watch: {} } as RollupWatchOptions) : {})
     })
   }
