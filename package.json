@@ -44,7 +44,7 @@
   "author": "GavinRay <gavinbirkhoff@gmail.com> (https://github.com/gvray)",
   "license": "MIT",
   "engines": {
-    "node": ">=17.0.0"
+    "node": ">=18.0.0"
   },
   "bugs": {
     "url": "https://github.com/gvray/swiftlet/issues"

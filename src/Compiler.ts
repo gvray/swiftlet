@@ -14,8 +14,7 @@ class Compiler {
 
   constructor(options: Options) {
     this.inputOptions = {
-      ...options,
-      outDir: options.outDir ?? 'dist'
+      ...options
     }
     this.hooks = {
       entryOption: new SyncHook<[]>([]), // start

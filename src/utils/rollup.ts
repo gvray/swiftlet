@@ -9,12 +9,12 @@ import { Options } from '../index'
 export async function createRollupOptions(options: Options): Promise<RollupOptions[]> {
   const {
     entry,
-    format = ['es'],
-    outDir = 'dist',
-    sourcemap = false,
-    dts: genDts = true,
-    rollupOptions = {},
-    pluginsRollup = [],
+    format,
+    outDir,
+    sourcemap,
+    dts: genDts,
+    rollupOptions,
+    pluginsRollup,
     watch,
     external,
     minify,
@@ -46,7 +46,7 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
     const outputBase: OutputOptions = {
       format,
       file: `./${path.join(outDir as string, `${name}.${fileSuffix(format)}.js`)}`,
-      sourcemap
+      sourcemap: sourcemap ?? false
     }
     if (format === 'umd' || format === 'iife') {
       const out: OutputOptions = {
@@ -86,6 +86,7 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
     ...restRollupOptions
   } = (appliedRollupOptions || {}) as any
 
+  // 优先使用 CLI/配置 external，其次使用 rollupOptions.external
   const finalExternal = external ?? userExternal
 
   const rollupInput = entry
@@ -103,7 +104,7 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
           typescript({
             compilerOptions: {
               declaration: false,
-              sourceMap: sourcemap,
+              sourceMap: sourcemap ?? false,
               ...(target ? { target } : {})
             }
           })
