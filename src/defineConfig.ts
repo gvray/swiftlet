@@ -1,7 +1,5 @@
-import type { SwiftletOptions } from './types'
+import type { Options } from './types'
 
-type ConfigType = SwiftletOptions
-
-export function defineConfig(config: ConfigType): ConfigType {
+export function defineConfig(config: Options): Options {
   return config
 }

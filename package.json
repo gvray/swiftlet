@@ -10,7 +10,7 @@
       "types": "./dist/index.d.ts"
     },
     "./cli": {
-      "require": "./dist/cli/cli.js"
+      "require": "./dist/cli/index.js"
     },
     "./plugins/LoadingPlugin": {
       "require": "./dist/plugins/LoadingPlugin.js",
@@ -21,7 +21,7 @@
     "swiftlet": "bin/swiftlet.js"
   },
   "scripts": {
-    "dev": "ts-node ./src/cli/cli.ts dev",
+    "dev": "ts-node ./src/cli/index.ts dev",
     "build": "rimraf dist && tsc",
     "build:watch": "tsc -w",
     "format": "prettier --write . && npx eslint src --ext .js,.ts",

@@ -1,6 +1,6 @@
 import { RollupOptions } from 'rollup'
 import RollupTask from './tasket/RollupTask'
-import { CompilerHooks, SwiftletOptions, StatusPayload } from './types'
+import { CompilerHooks, Options, StatusPayload } from './types'
 import DeleteTask from './tasket/DeleteTask'
 import path from 'node:path'
 import { SyncHook } from 'tapable'
@@ -9,10 +9,10 @@ import { createRollupOptions } from './utils/rollup'
 import chalk from 'chalk'
 
 class Compiler {
-  readonly inputOptions: SwiftletOptions
+  readonly inputOptions: Options
   public readonly hooks: CompilerHooks
 
-  constructor(options: SwiftletOptions) {
+  constructor(options: Options) {
     this.inputOptions = {
       ...options,
       outDir: options.outDir ?? 'dist'

@@ -30,7 +30,6 @@ export class LoadingPlugin implements SwiftletPlugin {
   }
 
   apply(compiler: { hooks: CompilerHooks }) {
-    // 全局日志护栏：避免与 spinner 同行搅合
     const originalConsole = {
       log: console.log.bind(console),
       warn: console.warn.bind(console),
@@ -58,7 +57,6 @@ export class LoadingPlugin implements SwiftletPlugin {
     })
 
     compiler.hooks.status.tap(this.name as string, (payload: StatusPayload) => {
-      // 其他阶段：整洁的一行日志
       this.printStatus(payload)
       this.lastStatus = payload.message
     })
@@ -76,7 +74,6 @@ export class LoadingPlugin implements SwiftletPlugin {
 
     compiler.hooks.failed.tap(this.name as string, (err?: Error) => {
       if (this.spinner.isSpinning) this.spinner.fail(err ? err.message : 'Build failed')
-      // 失败后恢复 console
       console.log = originalConsole.log
       console.warn = originalConsole.warn
       console.error = originalConsole.error
@@ -84,7 +81,6 @@ export class LoadingPlugin implements SwiftletPlugin {
 
     compiler.hooks.done.tap(this.name as string, () => {
       if (this.spinner.isSpinning) this.spinner.succeed('Build finished!')
-      // 完成后恢复 console
       console.log = originalConsole.log
       console.warn = originalConsole.warn
       console.error = originalConsole.error

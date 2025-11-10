@@ -1,16 +1,29 @@
 import Compiler from './Compiler'
-import { SwiftletOptions, ShellInputOptions, SwiftletPlugin } from './types'
+import { Options, ShellInputOptions, SwiftletPlugin, PluginFactory } from './types'
 import LoadingPlugin from './plugins/LoadingPlugin'
 
-function swiftlet(options: SwiftletOptions) {
-  const shellOptions: ShellInputOptions = process.argv.slice(2).reduce<ShellInputOptions>((config: any, arg) => {
+function parseShellOptions(argv: string[]): ShellInputOptions {
+  return argv.reduce<ShellInputOptions>((config: any, arg) => {
     const [key, value] = arg.split('=')
-    // TODO
-    config[key] = value
+    if (!key) return config
+    if (value === undefined) {
+      config[key] = true
+    } else if (value === 'true') {
+      config[key] = true
+    } else if (value === 'false') {
+      config[key] = false
+    } else {
+      config[key] = value
+    }
     return config
   }, {})
-  const finalOptions = { ...options, ...shellOptions }
-  const compiler = new Compiler(finalOptions)
+}
+
+function createCompiler(options: Options) {
+  const shellOptions: ShellInputOptions = parseShellOptions(process.argv.slice(2))
+
+  const finalOptions: Options = { ...options, ...shellOptions }
+  const compiler = new Compiler(finalOptions as any)
 
   // 内置插件：默认启用 LoadingPlugin
   try {
@@ -19,18 +32,11 @@ function swiftlet(options: SwiftletOptions) {
     console.error(e)
   }
 
-  // 收集用户插件：支持新字段 plugin（单个或数组）与兼容旧字段 swiftletPlugins
-  const userPlugins: SwiftletPlugin[] = []
-  const candidate = (finalOptions as any).plugin
-  if (candidate) {
-    if (Array.isArray(candidate)) userPlugins.push(...candidate)
-    else userPlugins.push(candidate)
-  }
-  if (finalOptions.swiftletPlugins && finalOptions.swiftletPlugins.length > 0) {
-    userPlugins.push(...finalOptions.swiftletPlugins)
-  }
-  for (const plugin of userPlugins) {
+  // 用户插件（新版：plugins 为工厂列表）
+  const factories = finalOptions.plugins || []
+  for (const factory of factories as PluginFactory[]) {
     try {
+      const plugin: SwiftletPlugin = factory()
       plugin.apply(compiler as any)
     } catch (e) {
       console.error(e)
@@ -40,4 +46,4 @@ function swiftlet(options: SwiftletOptions) {
   return compiler
 }
 
-export default swiftlet
+export default createCompiler

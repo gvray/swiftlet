@@ -1,43 +1,34 @@
-import swiftlet from '../swiftlet'
-import type { SwiftletPlugin } from '../types'
+import createCompiler from '../swiftlet'
+import type { StatusPayload } from '../types'
 
-describe('swiftlet core', () => {
-  test('exposes hooks and applies user plugin (plugin field)', () => {
+describe('swiftlet core (new Options)', () => {
+  test('applies user plugin via factories', () => {
     const calls: string[] = []
-    const plugin: SwiftletPlugin = {
+    const factory = () => ({
       name: 'TestPlugin',
-      apply(compiler) {
+      apply(compiler: { hooks: any }) {
         compiler.hooks.run.tap('TestPlugin', () => calls.push('run'))
-        compiler.hooks.status.tap('TestPlugin', (text: string) => calls.push(`status:${text}`))
+        compiler.hooks.status.tap('TestPlugin', (payload: StatusPayload) => calls.push(`status:${payload.message}`))
       }
-    }
-    const compiler = swiftlet({ input: 'noop.js', plugin })
+    })
+    const compiler = createCompiler({ entry: 'noop.js', plugins: [factory] })
     // 模拟生命周期
     compiler.hooks.run.call()
-    compiler.hooks.status.call('hello')
-    expect(calls).toEqual(['run', 'status:hello'])
-  })
-
-  test('supports legacy swiftletPlugins', () => {
-    const calls: string[] = []
-    const plugin: SwiftletPlugin = {
-      name: 'LegacyPlugin',
-      apply(compiler) {
-        compiler.hooks.done.tap('LegacyPlugin', () => calls.push('done'))
-      }
-    }
-    const compiler = swiftlet({ input: 'noop.js', swiftletPlugins: [plugin] })
+    compiler.hooks.status.call({ message: 'hello' })
+    // 清理 spinner
     compiler.hooks.done.call()
-    expect(calls).toEqual(['done'])
+    expect(calls).toEqual(['run', 'status:hello'])
   })
 
   test('dev flags propagate via argv (watch & sourcemap)', () => {
     const origArgv = [...process.argv]
     try {
       process.argv.push('watch=true', 'sourcemap=true')
-      const compiler = swiftlet({ input: 'noop.js' })
+      const compiler = createCompiler({ entry: 'noop.js' })
       expect((compiler as any).inputOptions.watch).toBe(true)
-      expect((compiler as any).inputOptions.sourcemap).toBe('true' as any)
+      expect((compiler as any).inputOptions.sourcemap).toBe(true)
+      // 清理 spinner
+      compiler.hooks.done.call()
     } finally {
       process.argv.length = 0
       Array.prototype.push.apply(process.argv, origArgv)

@@ -4,101 +4,130 @@ import terser from '@rollup/plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 import dts from 'rollup-plugin-dts'
 import { appRoot, isTypeScript, transformString } from './index'
-import { SwiftletOptions } from '../index'
+import { Options } from '../index'
 
-export async function createRollupOptions(options: SwiftletOptions): Promise<RollupOptions[]> {
-  const { input, target = 'esm', outDir, sourcemap = false, types = true, rollupOptions = {}, plugins = [] } = options
-  const pck = await import(path.resolve(appRoot, 'package.json'))
+export async function createRollupOptions(options: Options): Promise<RollupOptions[]> {
+  const {
+    entry,
+    format = ['es'],
+    outDir = 'dist',
+    sourcemap = false,
+    dts: genDts = true,
+    rollupOptions = {},
+    pluginsRollup = [],
+    watch,
+    external,
+    minify,
+    globals,
+    globalName,
+    target
+  } = options
+
+  const pck = require(path.resolve(appRoot, 'package.json'))
   const { name = 'bundle' } = pck
-  // output
-  let output: OutputOptions[]
-  const mappingFileName = (name: string): string => {
-    switch (name) {
-      case 'umd':
-        return 'min'
+
+  const normalizeFormat = (fmt: string): ModuleFormat => {
+    if (fmt === 'esm') return 'es'
+    return fmt as ModuleFormat
+  }
+
+  const fileSuffix = (fmt: ModuleFormat): string => {
+    switch (fmt) {
       case 'es':
         return 'esm'
-      default:
-        return name
-    }
-  }
-  const genOutput = (format: ModuleFormat): OutputOptions => {
-    switch (format) {
       case 'umd':
-        return {
-          format,
-          file: `./${path.join(outDir as string, `${name}.${mappingFileName(format)}.js`)}`,
-          name: transformString(name),
-          noConflict: true,
-          sourcemap
-        }
-        break
+        return 'min'
       default:
-        return {
-          format,
-          file: `./${path.join(outDir as string, `${name}.${mappingFileName(format)}.js`)}`,
-          sourcemap
-        }
+        return String(fmt)
     }
   }
-  if (Array.isArray(target)) {
-    output = target.map(genOutput)
-  } else {
-    output = [genOutput(target)]
-  }
-  // apply user-defined globals for UMD/IIFE from rollupOptions.output.globals
-  const configuredGlobals = (rollupOptions as any)?.output?.globals as Record<string, string> | undefined
-  if (configuredGlobals) {
-    output = output.map((item) => {
-      if (item.format === 'umd' || item.format === 'iife') {
-        return { ...item, globals: configuredGlobals }
+
+  const genOutput = (format: ModuleFormat): OutputOptions => {
+    const outputBase: OutputOptions = {
+      format,
+      file: `./${path.join(outDir as string, `${name}.${fileSuffix(format)}.js`)}`,
+      sourcemap
+    }
+    if (format === 'umd' || format === 'iife') {
+      const out: OutputOptions = {
+        ...outputBase,
+        name: globalName ?? transformString(name),
+        noConflict: true
       }
-      return item
-    })
+      if (globals) {
+        out.globals = globals
+      }
+      return out
+    }
+    return outputBase
   }
-  // plugin
-  const innerPlugins: InputPluginOption[] = [terser()]
+
+  const normalizedFormats: ModuleFormat[] = Array.isArray(format)
+    ? (format.map((f) => normalizeFormat(f)) as ModuleFormat[])
+    : [normalizeFormat(format as unknown as string)]
+
+  const outputs: OutputOptions[] = normalizedFormats.map(genOutput)
+
+  const innerPlugins: InputPluginOption[] = []
+  if (minify === true || minify === 'terser') {
+    innerPlugins.push(terser())
+  } else if (minify === 'esbuild') {
+    // TODO: optional esbuild minification
+  }
 
   const configs: RollupOptions[] = []
 
-  const { watch } = options
+  const appliedRollupOptions =
+    typeof rollupOptions === 'function' ? rollupOptions({ input: entry, output: outputs }) : rollupOptions
+  const {
+    output: _userOutput,
+    external: userExternal,
+    plugins: userPlugins,
+    ...restRollupOptions
+  } = (appliedRollupOptions || {}) as any
 
-  // avoid overriding generated output by user rollupOptions.output
-  const { output: _userOutput, ...restRollupOptions } = rollupOptions as any
+  const finalExternal = external ?? userExternal
+
+  const rollupInput = entry
 
   if (isTypeScript()) {
-    output.forEach((item) => {
-      configs.push({
-        input,
+    outputs.forEach((item) => {
+      const cfg: RollupOptions = {
+        input: rollupInput,
         output: [item],
+        external: finalExternal,
         plugins: [
-          ...plugins,
+          ...(pluginsRollup || []),
+          ...(userPlugins || []),
           ...innerPlugins,
           typescript({
             compilerOptions: {
               declaration: false,
-              // module: item.format === 'cjs' || item.format === 'commonjs' ? 'CommonJS' : 'ESNext'
-              sourceMap: sourcemap
+              sourceMap: sourcemap,
+              ...(target ? { target } : {})
             }
           })
         ],
-        ...restRollupOptions, // TODO merge plugins (output handled separately)
+        ...restRollupOptions,
         ...(watch ? ({ watch: {} } as RollupWatchOptions) : {})
-      })
+      }
+      configs.push(cfg)
     })
   } else {
-    configs.push({
-      input,
-      output,
-      plugins: [...plugins, ...innerPlugins],
-      ...restRollupOptions, // TODO merge plugins (output handled separately)
+    const cfg: RollupOptions = {
+      input: rollupInput,
+      output: outputs,
+      external: finalExternal,
+      plugins: [...(pluginsRollup || []), ...(userPlugins || []), ...innerPlugins],
+      ...restRollupOptions,
       ...(watch ? ({ watch: {} } as RollupWatchOptions) : {})
-    })
+    }
+    configs.push(cfg)
   }
 
-  if (types && isTypeScript()) {
+  if (genDts && isTypeScript()) {
     const dtsOutput: RollupOptions = {
-      input,
+      input: rollupInput,
       plugins: [dts()],
       output: [
         {

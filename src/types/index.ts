@@ -1,21 +1,7 @@
-import { InputPluginOption, ModuleFormat, RollupOptions } from 'rollup'
+import { InputPluginOption, RollupOptions } from 'rollup'
 import { SyncHook } from 'tapable'
 
-export enum SwiftJSTransformerTypes {
-  BABEL = 'babel',
-  ESBUILD = 'esbuild',
-  SWC = 'swc'
-}
-
-export enum SwiftPlatformTypes {
-  NODE = 'node',
-  BROWSER = 'browser'
-}
-
-export enum SwiftBundlesTypes {
-  ESM = 'esm',
-  CJS = 'cjs'
-}
+// 构建状态与钩子类型（保持稳定，对外暴露）
 export interface StatusPayload {
   message: string
   scope?: string
@@ -38,20 +24,49 @@ export interface SwiftletPlugin {
   apply(compiler: { hooks: CompilerHooks }): void
 }
 
-export interface SwiftletOptions {
-  input: string
+// 新版打包格式、平台与目标定义
+export type BundleFormat = 'es' | 'cjs' | 'umd' | 'iife'
+export type Platform = 'node' | 'browser' | 'neutral'
+export type Target =
+  | 'es5'
+  | 'es2015'
+  | 'es2016'
+  | 'es2017'
+  | 'es2018'
+  | 'es2019'
+  | 'es2020'
+  | 'es2021'
+  | 'es2022'
+  | 'esnext'
+  | 'node12'
+  | 'node14'
+  | 'node16'
+  | 'node18'
+  | 'node20'
+
+// 插件工厂：用于创建 Swiftlet 插件实例
+export type PluginFactory = () => SwiftletPlugin
+
+// 统一的新配置类型（专业版 Options）
+export interface Options {
+  entry: string | string[] | Record<string, string>
   outDir?: string
-  target?: ModuleFormat | ModuleFormat[]
+  format?: BundleFormat[]
+  dts?: boolean
+  target?: Target
+  platform?: Platform
   sourcemap?: boolean
-  plugins?: InputPluginOption[]
-  rollupOptions?: RollupOptions
-  types?: boolean // dts
-  // 新的 Swiftlet 插件配置：支持单个或数组
-  plugin?: SwiftletPlugin | SwiftletPlugin[]
-  // 向后兼容旧字段
-  swiftletPlugins?: SwiftletPlugin[]
-  // dev 模式支持
+  minify?: boolean | 'esbuild' | 'terser'
+  splitting?: boolean
+  plugins?: PluginFactory[]
+  pluginsRollup?: InputPluginOption[]
   watch?: boolean
+  external?: string[] | ((id: string) => boolean)
+  rollupOptions?: RollupOptions | ((options: RollupOptions) => RollupOptions)
+  onSuccess?: () => void
+  globalName?: string
+  globals?: Record<string, string>
 }
 
-export type ShellInputOptions = Partial<SwiftletOptions>
+// Shell 注入项（兼容新版）
+export type ShellInputOptions = Partial<Options>
