@@ -1,14 +1,17 @@
 import { OutputOptions, RollupBuild, RollupOptions, RollupWatcher, RollupWatcherEvent } from 'rollup'
 import SwiftletTask from './SwiftletTask'
+import type { CompilerHooks } from '../types'
 
 class RollupTask extends SwiftletTask {
   rollupOptions: RollupOptions
   outputOptionsList?: OutputOptions[]
-  constructor(options: RollupOptions) {
+  private hooks: CompilerHooks | undefined
+  constructor(options: RollupOptions, hooks?: CompilerHooks) {
     super()
     this.rollupOptions = options
     const out = options.output as OutputOptions | OutputOptions[] | undefined
     this.outputOptionsList = Array.isArray(out) ? out : out ? [out] : []
+    this.hooks = hooks
   }
 
   async build(options: RollupOptions): Promise<boolean> {
@@ -20,17 +23,36 @@ class RollupTask extends SwiftletTask {
       if (hasWatch) {
         const { watch } = await import('rollup')
         const watcher: RollupWatcher = watch(options as unknown as import('rollup').RollupWatchOptions)
+        const format = this.outputOptionsList?.[0]?.format ? String(this.outputOptionsList?.[0]?.format) : 'unknown'
+        this.hooks?.status.call({ message: 'Entering watch mode...', scope: 'watch', phase: 'build' })
         watcher.on('event', (event: RollupWatcherEvent) => {
           switch (event.code) {
-            case 'START':
-            case 'BUNDLE_START':
-            case 'BUNDLE_END':
-            case 'END':
+            case 'START': {
+              this.hooks?.status.call({ message: 'Rebuild started...', scope: 'watch', phase: 'build' })
               break
-            case 'ERROR':
+            }
+            case 'BUNDLE_START': {
+              this.hooks?.compile.call(format)
+              this.hooks?.status.call({ message: `Compiling (${format})...`, scope: 'watch', phase: 'compile' })
+              break
+            }
+            case 'BUNDLE_END': {
+              const duration = (event as any).duration
+              this.hooks?.status.call({ message: `Compiled in ${duration}ms`, scope: 'watch', phase: 'finalize' })
+              break
+            }
+            case 'END': {
+              this.hooks?.done.call()
+              this.hooks?.status.call({ message: 'Watching for file changes...', scope: 'watch', phase: 'finalize' })
+              break
+            }
+            case 'ERROR': {
               buildFailed = true
-              console.error((event as { code: 'ERROR'; error: unknown }).error)
+              const err = (event as { code: 'ERROR'; error: unknown }).error as Error | undefined
+              this.hooks?.failed.call(err)
+              console.error(err)
               break
+            }
           }
         })
         // 进入 watch 后，立即返回（不中断进程）
@@ -42,6 +64,7 @@ class RollupTask extends SwiftletTask {
       }
     } catch (error) {
       buildFailed = true
+      this.hooks?.failed.call(error as Error)
       console.error(error)
     } finally {
       if (bundle) await bundle.close()

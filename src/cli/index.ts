@@ -117,11 +117,14 @@ export async function run({ _opts = process.argv.slice(2), pck }: any) {
         const mainConfigFile = getMainConfigFile({ cwd: appRoot })
         if (!mainConfigFile)
           throw Error('Check if your project is missing a configuration file (swiftlet.config.(ts|js))')
-        const mod = await import(mainConfigFile)
+        // Use jiti to load config with universal import/TS support (like ESLint 9)
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const jiti = require('jiti')(process.cwd(), { interopDefault: true, esmResolve: true })
+        const mod: any = jiti(mainConfigFile)
         const config = (mod && (mod.default || mod)) as any
         const merged = mergeOptions(config, args)
         const compiler = createCompiler(merged)
-        compiler.run()
+        await compiler.run()
       } catch (error) {
         console.error(error)
         process.exit(1)
@@ -138,25 +141,23 @@ export async function run({ _opts = process.argv.slice(2), pck }: any) {
     .option('--platform <platform>', 'node | browser | neutral')
     .option('--dts', 'Generate .d.ts files')
     .option('--minify [engine]', 'Enable minification (true, esbuild, terser)')
-    .option(
-      '--external <pkg>',
-      'External dependency (repeat or comma separated)',
-      (val, prev: string[] | undefined) => [...(prev || []), val],
-      []
-    )
+    .option('--external <pkg>', 'External dependency (comma separated)')
     .option('--globals <mapping>', 'Globals mapping, e.g. react=React,vue=Vue or JSON')
     .option('--global-name <name>', 'Global name for UMD/IIFE')
     .option('--on-success <cmd>', 'Command to run after build success')
-    .action(async (args) => {
+    .action(async (args: any) => {
       try {
         const mainConfigFile = getMainConfigFile({ cwd: appRoot })
         if (!mainConfigFile)
           throw Error('Check if your project is missing a configuration file (swiftlet.config.(ts|js))')
-        const mod = await import(mainConfigFile)
+        // Use jiti to load config with universal import/TS support (like ESLint 9)
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const jiti = require('jiti')(process.cwd(), { interopDefault: true, esmResolve: true })
+        const mod: any = jiti(mainConfigFile)
         const config = (mod && (mod.default || mod)) as any
         const merged = mergeOptions(config, { ...args, watch: true, sourcemap: true })
         const compiler = createCompiler(merged)
-        compiler.run()
+        await compiler.run()
       } catch (error) {
         console.error(error)
         process.exit(1)

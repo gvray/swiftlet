@@ -43,7 +43,7 @@ class Compiler {
       const firstOutput = Array.isArray(outputs) ? outputs[0] : outputs
       const currentFormat = firstOutput?.format ?? 'unknown'
       this.hooks.compile.call(String(currentFormat))
-      const rollupTask = new RollupTask(options)
+      const rollupTask = new RollupTask(options, this.hooks)
       const buildFailed = await rollupTask.run()
       if (buildFailed) {
         this.hooks.failed.call(undefined)
