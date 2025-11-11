@@ -31,6 +31,11 @@ export function getMainConfigFile(opts: { cwd: string; defaultConfigFiles?: stri
   return mainConfigFile
 }
 
-export function transformString(input: string): string {
-  return input.replace(/(?:^|-)([a-z])/g, (_, letter) => letter.toUpperCase())
+export function transformPackageName(name: string, upperFirst = true): string {
+  const result = name
+    .replace(/^@/, '')
+    .replace(/\//g, '-')
+    .replace(/(?:^|-)([a-z])/g, (_, letter) => letter.toUpperCase())
+
+  return upperFirst ? result : result[0].toLowerCase() + result.slice(1)
 }

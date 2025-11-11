@@ -13,5 +13,3 @@ export class SimpleStatusPlugin {
     })
   }
 }
-
-module.exports = { SimpleStatusPlugin }

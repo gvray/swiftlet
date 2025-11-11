@@ -1,6 +1,6 @@
 import { Command } from 'commander'
 import { appRoot, getMainConfigFile } from '../utils'
-import createCompiler from '../index'
+import { createCompiler } from '../index'
 import { exec } from 'node:child_process'
 
 function parseList(input?: string | string[]): string[] | undefined {

@@ -1,126 +1,42 @@
 # Swiftlet
 
-Web dev build tool
+A modern build tool for libraries and apps. Focused, fast, and extensible.
 
-## Usage
+- Unified config loader (JS/TS, CJS/ESM) powered by jiti
+- Clean hooks API with built-in professional spinner
+- Rollup under the hood with sensible defaults
+- First-class TypeScript support
 
-Install the package:
+## Quick Start
 
-```shell
-npm install --save-dev swiftlet
+Install:
 
-yarn add --dev swiftlet
-
-pnpm add --save-dev swiftlet
+```bash
+pnpm add -D swiftlet
 ```
 
-Create a `swiftlet.config.js` (or `.ts`) file in your project root:
+Create `swiftlet.config.ts`:
 
-```js
-const path = require('path')
-const { defineConfig } = require('swiftlet')
+```ts
+import path from 'node:path'
+import { defineConfig } from 'swiftlet'
 
-const input = path.resolve('./src/', 'index.js')
-
-module.exports = defineConfig({
-  input,
-  target: ['esm', 'cjs', 'umd'],
-  outDir: './dist'
-  // External deps
-  // Option A: array
-  // rollupOptions: { external: ['@scope/pkg'] },
-  // Option B: predicate
-  // rollupOptions: { external: (id) => id.startsWith('@scope/') },
-
-  // UMD/IIFE globals mapping for externals
-  // rollupOptions: {
-  //   output: {
-  //     globals: {
-  //       '@gvray/mathkit': 'mathkit'
-  //     }
-  //   }
-  // },
-
-  // Swiftlet plugins (built-in LoadingPlugin is enabled by default)
-  // Support single or array
-  // plugin: [new MySwiftletPlugin()]
+export default defineConfig({
+  entry: path.resolve('./src', 'index.ts'),
+  format: ['es', 'cjs', 'umd'],
+  outDir: './dist',
+  external: (id) => id.startsWith('@scope/')
 })
 ```
 
-## CLI
+Build:
 
-Start building an app
-
-```shell
+```bash
 swiftlet build
 ```
 
-Development (watch + sourcemap):
+Dev (watch + sourcemap):
 
-```shell
+```bash
 swiftlet dev
 ```
-
-```text
-Usage: swiftlet [options] [command]
-
-Web dev build tool
-
-Options:
-  -v, --version   output the version number
-  -h, --help      display help for command
-
-Commands:
-  build           build an app
-  dev             start dev build with watch and sourcemap
-  help [command]  display help for command
-```
-
-## API
-
-Import and run programmatically:
-
-```ts
-import swiftlet, { defineConfig, Compiler, LoadingPlugin } from 'swiftlet'
-
-const config = defineConfig({
-  input: './src/index.ts',
-  target: ['esm', 'cjs', 'umd'],
-  outDir: './dist',
-  plugin: [
-    // Optional: user plugins (LoadingPlugin is built-in by default)
-  ],
-  rollupOptions: {
-    external: (id) => id.startsWith('@scope/')
-  }
-})
-
-// Quick start
-await swiftlet(config).run()
-
-// Advanced
-const compiler = new Compiler(config)
-compiler.hooks.status.tap('logger', ({ scope, message }) => {
-  console.log(`${scope ? `[${scope}] ` : ''}${message}`)
-})
-await compiler.run()
-```
-
-### Hooks
-
-The compiler exposes tapable `SyncHook`s:
-
-- entryOption: () => void
-- run: () => void
-- compile: (format: string) => void
-- afterCompile: () => void
-- emit: () => void
-- done: () => void
-- status: ({ message, scope?, phase? }) => void
-- failed: (error?) => void
-
-Status payload fields:
-
-- message: string (required)
-- scope: string | undefined (e.g. 'clean' | 'build' | 'esm')
-- phase: 'clean' | 'build' | 'compile' | 'finalize' | string

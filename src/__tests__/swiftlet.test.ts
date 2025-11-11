@@ -1,4 +1,4 @@
-import createCompiler from '../swiftlet'
+import { createCompiler } from '../core'
 import type { StatusPayload } from '../types'
 
 describe('swiftlet core (new Options)', () => {

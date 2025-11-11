@@ -2,7 +2,7 @@ import ora from 'ora'
 import chalk from 'chalk'
 import { SwiftletPlugin, CompilerHooks, StatusPayload } from '../types'
 
-export class LoadingPlugin implements SwiftletPlugin {
+class LoadingPlugin implements SwiftletPlugin {
   name?: string
   private spinner = ora({ text: 'Initializing...', color: 'cyan' })
   private phase = 'Building'

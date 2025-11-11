@@ -1,27 +1,10 @@
 import Compiler from './Compiler'
-import { Options, ShellInputOptions, SwiftletPlugin, PluginFactory } from './types'
-import LoadingPlugin from './plugins/LoadingPlugin'
-import { DEFAULT_OPTIONS } from './constants'
-import { isTypeScript } from './utils'
+import { Options, ShellInputOptions, SwiftletPlugin, PluginFactory } from '../types'
+import LoadingPlugin from '../plugins/LoadingPlugin'
+import { DEFAULT_OPTIONS } from '../constants'
+import { isTypeScript } from '../utils'
 
-function parseShellOptions(argv: string[]): ShellInputOptions {
-  return argv.reduce<ShellInputOptions>((config: any, arg) => {
-    const [key, value] = arg.split('=')
-    if (!key) return config
-    if (value === undefined) {
-      config[key] = true
-    } else if (value === 'true') {
-      config[key] = true
-    } else if (value === 'false') {
-      config[key] = false
-    } else {
-      config[key] = value
-    }
-    return config
-  }, {})
-}
-
-function mergeRollupOptions(base: Options): Options {
+export function mergeRollupOptions(base: Options): Options {
   const applied = base.rollupOptions
   if (!applied) return base
   const input = { input: base.entry, output: [] } as any
@@ -32,10 +15,7 @@ function mergeRollupOptions(base: Options): Options {
   } as Options
 }
 
-function createCompiler(userOptions: Options) {
-  // Shell 注入（最高优先级）：用于兼容直接通过命令行传参的场景
-  const shellOptions: ShellInputOptions = parseShellOptions(process.argv.slice(2))
-
+export function createCompiler(userOptions: Options) {
   // 合并顺序：默认 < 配置文件(userOptions) < rollupOptions < CLI(shellOptions)
   const withDefaults: Options = {
     ...DEFAULT_OPTIONS,
@@ -43,8 +23,7 @@ function createCompiler(userOptions: Options) {
   } as Options
   const withRollupMerged: Options = mergeRollupOptions(withDefaults)
   const finalOptions: Options = {
-    ...withRollupMerged,
-    ...shellOptions
+    ...withRollupMerged
   }
 
   // 为 entry 设置合理的默认值（根据是否为 TS 项目）
@@ -74,5 +53,3 @@ function createCompiler(userOptions: Options) {
 
   return compiler
 }
-
-export default createCompiler

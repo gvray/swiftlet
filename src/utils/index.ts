@@ -1,1 +1,1 @@
-export { appRoot, isTypeScript, getMainConfigFile, transformString } from './swiftlet'
+export { appRoot, isTypeScript, getMainConfigFile, transformPackageName } from './swiftlet'

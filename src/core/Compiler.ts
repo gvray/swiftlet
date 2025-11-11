@@ -1,11 +1,11 @@
 import { RollupOptions } from 'rollup'
-import RollupTask from './tasket/RollupTask'
-import { CompilerHooks, Options, StatusPayload } from './types'
-import DeleteTask from './tasket/DeleteTask'
+import RollupTask from '../tasket/RollupTask'
+import { CompilerHooks, Options, StatusPayload } from '../types'
+import DeleteTask from '../tasket/DeleteTask'
 import path from 'node:path'
 import { SyncHook } from 'tapable'
-import { appRoot } from './utils'
-import { createRollupOptions } from './utils/rollup'
+import { appRoot } from '../utils'
+import { createRollupOptions } from '../utils/rollup'
 import chalk from 'chalk'
 
 class Compiler {

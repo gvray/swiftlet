@@ -3,7 +3,7 @@ import { RollupOptions, OutputOptions, defineConfig, InputPluginOption, ModuleFo
 import terser from '@rollup/plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 import dts from 'rollup-plugin-dts'
-import { appRoot, isTypeScript, transformString } from './index'
+import { appRoot, isTypeScript, transformPackageName } from './index'
 import { Options } from '../index'
 
 export async function createRollupOptions(options: Options): Promise<RollupOptions[]> {
@@ -51,7 +51,7 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
     if (format === 'umd' || format === 'iife') {
       const out: OutputOptions = {
         ...outputBase,
-        name: globalName ?? transformString(name),
+        name: globalName ?? transformPackageName(name),
         noConflict: true
       }
       if (globals) {

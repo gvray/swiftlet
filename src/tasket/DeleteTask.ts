@@ -1,7 +1,7 @@
 import * as fs from 'fs-extra'
 import SwiftletTask from './SwiftletTask'
 
-export class DeleteTask extends SwiftletTask {
+class DeleteTask extends SwiftletTask {
   private readonly paths: string[]
 
   public constructor(paths: string[]) {
