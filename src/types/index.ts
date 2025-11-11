@@ -62,7 +62,9 @@ export interface Options {
   pluginsRollup?: InputPluginOption[]
   watch?: boolean
   external?: string[] | ((id: string) => boolean)
-  rollupOptions?: RollupOptions | ((options: RollupOptions) => RollupOptions)
+  clean?: boolean
+  printRollup?: boolean
+  rollupOptions?: (options: RollupOptions) => RollupOptions
   onSuccess?: () => void
   globalName?: string
   globals?: Record<string, string>

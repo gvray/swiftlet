@@ -29,13 +29,15 @@ class Compiler {
   }
 
   async run() {
-    const { outDir } = this.inputOptions
+    const { outDir, clean } = this.inputOptions
     this.hooks.entryOption.call()
     this.hooks.run.call()
-    this.hooks.status.call({ message: `clean ${outDir} ...`, scope: 'clean', phase: 'clean' })
-    const cleanTask = new DeleteTask([path.resolve(appRoot, outDir as string)])
-    await cleanTask.run()
-    this.hooks.status.call({ message: chalk.green(`clean success`), scope: 'clean', phase: 'finalize' })
+    if (clean !== false) {
+      this.hooks.status.call({ message: `clean ${outDir} ...`, scope: 'clean', phase: 'clean' })
+      const cleanTask = new DeleteTask([path.resolve(appRoot, outDir as string)])
+      await cleanTask.run()
+      this.hooks.status.call({ message: chalk.green(`clean success`), scope: 'clean', phase: 'finalize' })
+    }
     this.hooks.status.call({ message: `build ...`, scope: 'build', phase: 'build' })
     const rollupOptions: RollupOptions[] = await createRollupOptions(this.inputOptions)
     for (const options of rollupOptions) {

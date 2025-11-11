@@ -1,6 +1,6 @@
 import { Command } from 'commander'
 import { appRoot, getMainConfigFile } from '../utils'
-import { createCompiler } from '../index'
+import { createCompiler, Options } from '../index'
 import { exec } from 'node:child_process'
 
 function parseList(input?: string | string[]): string[] | undefined {
@@ -44,7 +44,7 @@ function parseGlobals(input?: string): Record<string, string> | undefined {
   return Object.fromEntries(entries)
 }
 
-function mergeOptions(config: any, cliArgs: any) {
+function mergeConfigWithCliArgs(config: Options, cliArgs: any) {
   const merged: any = {
     ...config,
     ...cliArgs
@@ -54,10 +54,28 @@ function mergeOptions(config: any, cliArgs: any) {
     const list = parseList(cliArgs.entry)
     merged.entry = list && list.length === 1 ? list[0] : list
   }
-  // format: comma-separated
-  if (cliArgs.format) merged.format = parseList(cliArgs.format)
-  // external: repeat or comma-separated
-  if (cliArgs.external) merged.external = parseList(cliArgs.external)
+  // format: comma-separated（与配置合并，去重）
+  if (cliArgs.format) {
+    const cliFmt = parseList(cliArgs.format) || []
+    const cfgFmt = Array.isArray(config.format)
+      ? (config.format as string[])
+      : config.format
+      ? [String(config.format)]
+      : []
+    merged.format = Array.from(new Set([...cfgFmt, ...cliFmt]))
+  }
+  // external: repeat or comma-separated（CLI 传入应与配置文件 external 合并，而非简单覆盖）
+  if (cliArgs.external) {
+    const cliExt = parseList(cliArgs.external) || []
+    const cfgExt = config.external as Options['external']
+    if (typeof cfgExt === 'function') {
+      merged.external = (id: string) => cfgExt(id) || cliExt.includes(id)
+    } else if (Array.isArray(cfgExt)) {
+      merged.external = Array.from(new Set([...(cfgExt as string[]), ...cliExt]))
+    } else {
+      merged.external = cliExt
+    }
+  }
   // globals: mapping
   if (cliArgs.globals) merged.globals = parseGlobals(cliArgs.globals)
   // minify: flag or engine
@@ -87,9 +105,10 @@ function mergeOptions(config: any, cliArgs: any) {
   return merged
 }
 
-export async function run({ _opts = process.argv.slice(2), pck }: any) {
+export async function run({ pck }: { pck: { name: string; description?: string; version: string } }) {
   const program = new Command()
-  program.name(pck.name).description(pck.description).version(pck.version, '-v, --version')
+  const description = pck.description ?? ''
+  program.name(pck.name).description(description).version(pck.version, '-v, --version')
 
   program
     .command('build')
@@ -112,6 +131,7 @@ export async function run({ _opts = process.argv.slice(2), pck }: any) {
     .option('--globals <mapping>', 'Globals mapping, e.g. react=React,vue=Vue or JSON')
     .option('--global-name <name>', 'Global name for UMD/IIFE')
     .option('--on-success <cmd>', 'Command to run after build success')
+    .option('--print-rollup', 'Print final Rollup config and exit')
     .action(async (args) => {
       try {
         const mainConfigFile = getMainConfigFile({ cwd: appRoot })
@@ -120,9 +140,18 @@ export async function run({ _opts = process.argv.slice(2), pck }: any) {
         // Use jiti to load config with universal import/TS support (like ESLint 9)
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         const jiti = require('jiti')(process.cwd(), { interopDefault: true, esmResolve: true })
-        const mod: any = jiti(mainConfigFile)
-        const config = (mod && (mod.default || mod)) as any
-        const merged = mergeOptions(config, args)
+        const mod = jiti(mainConfigFile)
+        const config = (mod && (mod.default || mod)) as Options
+        const merged = mergeConfigWithCliArgs(config, args)
+        if (args.printRollup) {
+          // 生成最终 Swiftlet 选项，再转换为 Rollup 配置，打印并退出
+          const { resolveSwiftletOptions } = await import('../core/swiftlet')
+          const finalOptions = resolveSwiftletOptions(merged)
+          const { createRollupOptions } = await import('../utils/rollup')
+          const rollupConfigs = await createRollupOptions(finalOptions)
+          process.stdout.write(`${JSON.stringify(rollupConfigs, null, 2)}\n`)
+          return
+        }
         const compiler = createCompiler(merged)
         await compiler.run()
       } catch (error) {
@@ -155,7 +184,7 @@ export async function run({ _opts = process.argv.slice(2), pck }: any) {
         const jiti = require('jiti')(process.cwd(), { interopDefault: true, esmResolve: true })
         const mod: any = jiti(mainConfigFile)
         const config = (mod && (mod.default || mod)) as any
-        const merged = mergeOptions(config, { ...args, watch: true, sourcemap: true })
+        const merged = mergeConfigWithCliArgs(config, { ...args, watch: true, sourcemap: true })
         const compiler = createCompiler(merged)
         await compiler.run()
       } catch (error) {

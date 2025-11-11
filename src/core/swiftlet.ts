@@ -1,46 +1,58 @@
 import Compiler from './Compiler'
-import { Options, ShellInputOptions, SwiftletPlugin, PluginFactory } from '../types'
+import { Options, SwiftletPlugin, PluginFactory } from '../types'
 import LoadingPlugin from '../plugins/LoadingPlugin'
 import { DEFAULT_OPTIONS } from '../constants'
 import { isTypeScript } from '../utils'
+import type { RollupOptions } from 'rollup'
 
-export function mergeRollupOptions(base: Options): Options {
-  const applied = base.rollupOptions
-  if (!applied) return base
-  const input = { input: base.entry, output: [] } as any
-  const merged = typeof applied === 'function' ? applied(input) : applied
+// 1) 应用默认配置到用户配置
+function applyDefaultOptions(userOptions: Options): Options {
   return {
-    ...base,
-    ...(merged || {})
-  } as Options
-}
-
-export function createCompiler(userOptions: Options) {
-  // 合并顺序：默认 < 配置文件(userOptions) < rollupOptions < CLI(shellOptions)
-  const withDefaults: Options = {
     ...DEFAULT_OPTIONS,
     ...userOptions
   } as Options
-  const withRollupMerged: Options = mergeRollupOptions(withDefaults)
-  const finalOptions: Options = {
-    ...withRollupMerged
-  }
+}
 
-  // 为 entry 设置合理的默认值（根据是否为 TS 项目）
-  if (!finalOptions.entry) {
-    finalOptions.entry = isTypeScript() ? 'src/index.ts' : 'src/index.js'
+// 2) 基于最终的 Swiftlet 选项创建 Rollup 初始配置（未应用用户 rollupOptions）
+function createBaseRollupConfig(swiftletOptions: Options): RollupOptions {
+  const outputs = [] as RollupOptions['output']
+  return { input: swiftletOptions.entry, output: outputs } as RollupOptions
+}
+
+// 3) 让用户的 rollupOptions 函数在 Rollup 配置层进行覆盖与返回
+function applyUserRollupOptions(swiftletOptions: Options, baseRollup: RollupOptions): Options {
+  const userFn = swiftletOptions.rollupOptions
+  if (!userFn) return swiftletOptions
+  const mergedRollup = userFn(baseRollup) || {}
+  return {
+    ...swiftletOptions,
+    ...(mergedRollup as any)
+  } as Options
+}
+
+// 4) 最终生成 Swiftlet 使用的选项（不再触碰 CLI，这里只面向传入的 userOptions）
+export function resolveSwiftletOptions(userOptions: Options): Options {
+  const withDefaults = applyDefaultOptions(userOptions)
+  const baseRollup = createBaseRollupConfig(withDefaults)
+  const withUserRollup = applyUserRollupOptions(withDefaults, baseRollup)
+
+  if (!withUserRollup.entry) {
+    withUserRollup.entry = isTypeScript() ? 'src/index.ts' : 'src/index.js'
   }
+  return withUserRollup
+}
+
+function createCompiler(userOptions: Options) {
+  const finalOptions = resolveSwiftletOptions(userOptions)
 
   const compiler = new Compiler(finalOptions as any)
 
-  // 内置插件：默认启用 LoadingPlugin
   try {
     new LoadingPlugin().apply(compiler as any)
   } catch (e) {
     console.error(e)
   }
 
-  // 用户插件（新版：plugins 为工厂列表）
   const factories = finalOptions.plugins || []
   for (const factory of factories as PluginFactory[]) {
     try {
@@ -53,3 +65,5 @@ export function createCompiler(userOptions: Options) {
 
   return compiler
 }
+
+export default createCompiler

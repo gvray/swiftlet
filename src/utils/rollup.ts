@@ -3,7 +3,7 @@ import { RollupOptions, OutputOptions, defineConfig, InputPluginOption, ModuleFo
 import terser from '@rollup/plugin-terser'
 import typescript from '@rollup/plugin-typescript'
 import dts from 'rollup-plugin-dts'
-import { appRoot, isTypeScript, transformPackageName } from './index'
+import { appRoot, isTypeScript, transformPackageName } from './swiftlet'
 import { Options } from '../index'
 
 export async function createRollupOptions(options: Options): Promise<RollupOptions[]> {
@@ -77,8 +77,7 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
 
   const configs: RollupOptions[] = []
 
-  const appliedRollupOptions =
-    typeof rollupOptions === 'function' ? rollupOptions({ input: entry, output: outputs }) : rollupOptions
+  const appliedRollupOptions = rollupOptions?.({ input: entry, output: outputs } as RollupOptions)
   const {
     output: _userOutput,
     external: userExternal,
@@ -86,8 +85,31 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
     ...restRollupOptions
   } = (appliedRollupOptions || {}) as any
 
-  // 优先使用 CLI/配置 external，其次使用 rollupOptions.external
-  const finalExternal = external ?? userExternal
+  // external 合并策略：兼容 Options.external (string[] | (id)=>boolean) 和 rollupOptions.external (string | RegExp | Array<string|RegExp> | (id)=>boolean)
+  const toPredicate = (ext?: unknown): ((id: string) => boolean) | undefined => {
+    if (ext == null) return undefined
+    if (typeof ext === 'function') return ext as (id: string) => boolean
+    if (typeof ext === 'string') return (id: string) => id === ext
+    if (ext instanceof RegExp) return (id: string) => (ext as RegExp).test(id)
+    if (Array.isArray(ext)) {
+      const arr = ext as Array<string | RegExp>
+      return (id: string) => arr.some((it) => (typeof it === 'string' ? it === id : (it as RegExp).test(id)))
+    }
+    return undefined
+  }
+
+  let finalExternal: RollupOptions['external']
+  const pa = toPredicate(external)
+  const pb = toPredicate(userExternal)
+  if (external && userExternal) {
+    if (Array.isArray(external) && Array.isArray(userExternal)) {
+      finalExternal = Array.from(new Set([...(external as string[]), ...(userExternal as string[])]))
+    } else {
+      finalExternal = (id: string) => (pa?.(id) ?? false) || (pb?.(id) ?? false)
+    }
+  } else {
+    finalExternal = (external as RollupOptions['external']) ?? (userExternal as RollupOptions['external'])
+  }
 
   const rollupInput = entry
 
@@ -98,16 +120,20 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
         output: [item],
         external: finalExternal,
         plugins: [
+          // 用户可控的前置插件（例如 alias/resolve）
           ...(pluginsRollup || []),
-          ...(userPlugins || []),
-          ...innerPlugins,
+          // TypeScript 编译尽量靠前，让后续 JS 插件接收到已转译的代码
           typescript({
             compilerOptions: {
               declaration: false,
               sourceMap: sourcemap ?? false,
               ...(target ? { target } : {})
             }
-          })
+          }),
+          // 用户提供的 rollupOptions.plugins（通常用于后置如 babel）
+          ...(userPlugins || []),
+          // 压缩应尽量放在最后
+          ...innerPlugins
         ],
         ...restRollupOptions,
         ...(watch ? ({ watch: {} } as RollupWatchOptions) : {})
@@ -119,7 +145,12 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
       input: rollupInput,
       output: outputs,
       external: finalExternal,
-      plugins: [...(pluginsRollup || []), ...(userPlugins || []), ...innerPlugins],
+      plugins: [
+        ...(pluginsRollup || []),
+        ...(userPlugins || []),
+        // 压缩应尽量放在最后
+        ...innerPlugins
+      ],
       ...restRollupOptions,
       ...(watch ? ({ watch: {} } as RollupWatchOptions) : {})
     }

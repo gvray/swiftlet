@@ -14,5 +14,6 @@ export const DEFAULT_OPTIONS: Partial<Options> = {
   format: ['es'],
   outDir: 'dist',
   sourcemap: false,
-  dts: true
+  dts: true,
+  clean: true
 }
