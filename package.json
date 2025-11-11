@@ -1,6 +1,6 @@
 {
   "name": "swiftlet",
-  "version": "1.0.0-Alpha.4",
+  "version": "1.0.0",
   "description": "Web dev build tool",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
