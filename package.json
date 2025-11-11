@@ -11,14 +11,6 @@
     },
     "./cli": {
       "require": "./dist/cli/index.js"
-    },
-    "./plugins/LoadingPlugin": {
-      "require": "./dist/plugins/LoadingPlugin.js",
-      "types": "./dist/plugins/LoadingPlugin.d.ts"
-    },
-    "./core": {
-      "require": "./dist/core/index.js",
-      "types": "./dist/core/index.d.ts"
     }
   },
   "bin": {

@@ -6,7 +6,7 @@ const entry = path.resolve('./src/', 'index.js')
 
 module.exports = defineConfig({
   entry,
-  format: ['es', 'cjs', 'umd'],
+  format: ['esm', 'cjs', 'umd'],
   outDir: './dist',
   plugins: [() => new SimpleStatusPlugin()],
   // external（函数形式，按组织前缀）

@@ -11,7 +11,7 @@ export const DEFAULT_CONFIG_FILES = [
 
 // Swiftlet 默认配置（集中定义，避免散落在各处）
 export const DEFAULT_OPTIONS: Partial<Options> = {
-  format: ['es'],
+  format: ['esm'],
   outDir: 'dist',
   sourcemap: false,
   dts: true,

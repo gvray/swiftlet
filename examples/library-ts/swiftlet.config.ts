@@ -6,7 +6,7 @@ const entry = path.resolve('./src/', 'index.ts')
 
 export default defineConfig({
   entry,
-  format: ['es', 'cjs', 'umd'],
+  format: ['esm', 'cjs', 'umd'],
   outDir: './dist',
   plugins: [() => new SimpleStatusPlugin()],
   external: ['@gvray/mathkit'],

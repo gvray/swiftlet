@@ -25,7 +25,7 @@ export interface SwiftletPlugin {
 }
 
 // 新版打包格式、平台与目标定义
-export type BundleFormat = 'es' | 'cjs' | 'umd' | 'iife'
+export type BundleFormat = 'esm' | 'cjs' | 'umd' | 'iife'
 export type Platform = 'node' | 'browser' | 'neutral'
 export type Target =
   | 'es5'
@@ -69,6 +69,3 @@ export interface Options {
   globalName?: string
   globals?: Record<string, string>
 }
-
-// Shell 注入项（兼容新版）
-export type ShellInputOptions = Partial<Options>

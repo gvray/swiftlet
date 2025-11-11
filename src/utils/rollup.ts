@@ -27,13 +27,12 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
   const { name = 'bundle' } = pck
 
   const normalizeFormat = (fmt: string): ModuleFormat => {
-    if (fmt === 'esm') return 'es'
     return fmt as ModuleFormat
   }
 
   const fileSuffix = (fmt: ModuleFormat): string => {
     switch (fmt) {
-      case 'es':
+      case 'esm':
         return 'esm'
       case 'umd':
         return 'min'
@@ -163,7 +162,7 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
       plugins: [dts()],
       output: [
         {
-          format: 'es',
+          format: 'esm' as ModuleFormat,
           file: `${path.join(outDir as string, `${name}.d.ts`)}`
         }
       ]
