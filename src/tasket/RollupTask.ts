@@ -1,9 +1,10 @@
-import { OutputOptions, RollupBuild, RollupOptions, RollupWatcher, RollupWatcherEvent } from 'rollup'
+import { InputOptions, OutputOptions, RollupBuild, RollupOptions, RollupWatcher, RollupWatcherEvent } from 'rollup'
 import SwiftletTask from './SwiftletTask'
 import type { CompilerHooks } from '../types'
 
 class RollupTask extends SwiftletTask {
   rollupOptions: RollupOptions
+  inputOptions: InputOptions
   outputOptionsList?: OutputOptions[]
   private hooks: CompilerHooks | undefined
   constructor(options: RollupOptions, hooks?: CompilerHooks) {
@@ -11,6 +12,9 @@ class RollupTask extends SwiftletTask {
     this.rollupOptions = options
     const out = options.output as OutputOptions | OutputOptions[] | undefined
     this.outputOptionsList = Array.isArray(out) ? out : out ? [out] : []
+    // 初始化 inputOptions，贴近 Rollup 的 API 语义（inputOptions 与 outputOptions 分离）
+    const { output: _outIgnored, watch: _watchIgnored, ...inputLike } = options as any
+    this.inputOptions = inputLike as InputOptions
     this.hooks = hooks
   }
 
@@ -22,7 +26,12 @@ class RollupTask extends SwiftletTask {
       const hasWatch = Object.prototype.hasOwnProperty.call(options as object, 'watch')
       if (hasWatch) {
         const { watch } = await import('rollup')
-        const watcher: RollupWatcher = watch(options as unknown as import('rollup').RollupWatchOptions)
+        // 构造 watch 配置：使用 inputOptions + outputOptionsList + 原始 watch 选项
+        const watcher: RollupWatcher = watch({
+          ...(this.inputOptions as unknown as import('rollup').RollupWatchOptions),
+          output: this.outputOptionsList || [],
+          watch: (options as any).watch
+        })
         const format = this.outputOptionsList?.[0]?.format ? String(this.outputOptionsList?.[0]?.format) : 'unknown'
         this.hooks?.status.call({ message: 'Entering watch mode...', scope: 'watch', phase: 'build' })
         watcher.on('event', (event: RollupWatcherEvent) => {
@@ -37,7 +46,7 @@ class RollupTask extends SwiftletTask {
               break
             }
             case 'BUNDLE_END': {
-              const duration = (event as any).duration
+              const { duration } = event as any
               this.hooks?.status.call({ message: `Compiled in ${duration}ms`, scope: 'watch', phase: 'finalize' })
               break
             }
@@ -59,7 +68,8 @@ class RollupTask extends SwiftletTask {
         return false
       } else {
         const { rollup } = await import('rollup')
-        bundle = await rollup(options)
+        // 语义化：rollup(inputOptions)
+        bundle = await rollup(this.inputOptions)
         await this.generateOutputs(bundle)
       }
     } catch (error) {
