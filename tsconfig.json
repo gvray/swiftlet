@@ -2,36 +2,14 @@
   "extends": "lavy/tsconfig.base.json",
   "compilerOptions": {
     "target": "ES2020",
-    "module": "CommonJS",
-    "baseUrl": "./",
-    "outDir": "./dist",
-    "rootDir": "./src",
+    "module": "ESNext",
+    "noUnusedLocals": false,
+    "baseUrl": ".",
+    "noEmit": true,
     "paths": {
       "@/*": ["src/*"]
-    },
-    // "declarationDir": "./types"
-    // "outFile": "./",
-    // "allowJs": true,
-    // "checkJs": true,
-    // "jsx": "react-jsxdev",
-    // "declaration": false,
-    "declarationMap": false,
-    "sourceMap": false
-    // "downlevelIteration": true ,
-    // "importHelpers": true,
-    // "lib": [],
-    // "rootDirs": [],
-    // "typeRoots": [],
-    // "types": [],
+    }
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "node_modules",
-    "**/node_modules/*",
-    "src/__tests__/**",
-    "**/*.test.ts",
-    "**/*.test.js",
-    "**/*.spec.ts",
-    "**/*.spec.js"
-  ]
+  "exclude": ["node_modules", "dist"]
 }
