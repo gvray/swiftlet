@@ -1,6 +1,7 @@
 import Compiler from './Compiler'
 import { Options, SwiftletPlugin, PluginFactory } from '../types'
 import LoadingPlugin from '../plugins/LoadingPlugin'
+import SizePlugin from '../plugins/SizePlugin'
 import { DEFAULT_OPTIONS } from '../constants'
 import { isTypeScript } from '../utils'
 import type { RollupOptions } from 'rollup'
@@ -49,6 +50,7 @@ function createCompiler(userOptions: Options) {
 
   try {
     new LoadingPlugin().apply(compiler as any)
+    new SizePlugin().apply(compiler as any)
   } catch (e) {
     console.error(e)
   }

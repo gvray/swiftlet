@@ -61,14 +61,15 @@
   "dependencies": {
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
+    "boxen": "^8.0.1",
     "cac": "^6.7.14",
     "chalk": "4",
+    "commander": "^11.1.0",
     "fs-extra": "^11.2.0",
+    "jiti": "^1.21.0",
     "ora": "^5.4.1",
     "rollup": "^4.6.1",
     "rollup-plugin-dts": "^6.1.0",
-    "tapable": "^2.2.1",
-    "jiti": "^1.21.0",
-    "commander": "^11.1.0"
+    "tapable": "^2.2.1"
   }
 }
