@@ -44,8 +44,8 @@ export type Target =
   | 'node18'
   | 'node20'
 
-// 插件工厂：用于创建 Swiftlet 插件实例
-export type PluginFactory = () => SwiftletPlugin
+// 插件创建函数：返回 SwiftletPlugin 的工厂函数（与生态命名更一致）
+export type PluginCreator = () => SwiftletPlugin
 
 // 统一的新配置类型（专业版 Options）
 export interface Options {
@@ -58,7 +58,7 @@ export interface Options {
   sourcemap?: boolean
   minify?: boolean | 'esbuild' | 'terser'
   splitting?: boolean
-  plugins?: PluginFactory[]
+  plugins?: (PluginCreator | SwiftletPlugin)[]
   pluginsRollup?: InputPluginOption[]
   watch?: boolean
   external?: string[] | ((id: string) => boolean)

@@ -1,5 +1,5 @@
 import Compiler from './Compiler'
-import { Options, SwiftletPlugin, PluginFactory } from '../types'
+import { Options, SwiftletPlugin, PluginCreator } from '../types'
 import LoadingPlugin from '../plugins/LoadingPlugin'
 import SizePlugin from '../plugins/SizePlugin'
 import { DEFAULT_OPTIONS } from '../constants'
@@ -55,10 +55,10 @@ function createCompiler(userOptions: Options) {
     console.error(e)
   }
 
-  const factories = finalOptions.plugins || []
-  for (const factory of factories as PluginFactory[]) {
+  const userPlugins = finalOptions.plugins || []
+  for (const item of userPlugins as (PluginCreator | SwiftletPlugin)[]) {
     try {
-      const plugin: SwiftletPlugin = factory()
+      const plugin: SwiftletPlugin = typeof item === 'function' ? (item as PluginCreator)() : (item as SwiftletPlugin)
       plugin.apply(compiler as any)
     } catch (e) {
       console.error(e)

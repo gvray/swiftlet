@@ -112,7 +112,7 @@ export function mergeConfigWithCliArgs(config: Options, cliArgs: any) {
   // onSuccess: create runtime plugin to execute command after done
   if (cliArgs.onSuccess && typeof cliArgs.onSuccess === 'string') {
     const cmd = cliArgs.onSuccess
-    const pluginFactory = () => ({
+    const pluginCreator = () => ({
       name: 'SwiftletCLIOnSuccess',
       apply(compiler: any) {
         compiler.hooks.done.tap('SwiftletCLIOnSuccess', () => {
@@ -127,7 +127,7 @@ export function mergeConfigWithCliArgs(config: Options, cliArgs: any) {
         })
       }
     })
-    merged.plugins = [...(merged.plugins || []), pluginFactory]
+    merged.plugins = [...(merged.plugins || []), pluginCreator]
   }
   return merged
 }
