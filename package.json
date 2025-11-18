@@ -1,8 +1,7 @@
 {
   "name": "swiftlet",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Web dev build tool",
-  "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {

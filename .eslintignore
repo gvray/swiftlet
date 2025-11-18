@@ -1,5 +1,0 @@
-build
-dist
-lib
-esm
-node_modules

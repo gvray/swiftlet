@@ -1,10 +1,13 @@
 #!/usr/bin/env node
+const path = require('path');
+const fs = require('fs');
 
-// require('v8-compile-cache')
-const pck = require('../package.json')
-require('../dist/cli/index')
-  .run({ pck })
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
+const pckPath = path.resolve(__dirname, '../package.json');
+const pck = JSON.parse(fs.readFileSync(pckPath, 'utf-8'));
+
+const { run } = require('../dist/cli');
+
+run({ pck }).catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

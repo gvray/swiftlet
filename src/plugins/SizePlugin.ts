@@ -80,6 +80,7 @@ class SizePlugin implements SwiftletPlugin {
         if (this.boxen) {
           const content = lines.join('\n');
           const box = this.boxen(content, {
+            margin: 1,
             padding: 1,
             borderStyle: 'round',
             borderColor: 'cyan',
