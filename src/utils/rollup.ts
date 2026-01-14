@@ -6,12 +6,41 @@ import {
   InputPluginOption,
   ModuleFormat,
   RollupWatchOptions,
+  LogLevel,
+  RollupLog,
+  LogOrStringHandler,
 } from 'rollup';
 import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
 import dts from 'rollup-plugin-dts';
 import { appRoot, isTypeScript, kebabCase, transformPackageName } from './swiftlet';
 import { Options } from '../index';
+import chalk from 'chalk';
+
+const COLORS: Record<string, (msg: string) => string> = {
+  error: chalk.red,
+  warn: chalk.yellow,
+  info: chalk.cyan,
+  debug: chalk.gray,
+};
+
+const loggedMessages = new Set<string>();
+
+const onLog = (level: LogLevel, log: RollupLog, handler: LogOrStringHandler) => {
+  const key = `${level}:${log.message}`;
+  if (loggedMessages.has(key)) return;
+  loggedMessages.add(key);
+
+  const colorize = COLORS[level];
+  if (colorize) {
+    handler(level, {
+      ...log,
+      message: colorize(log.message),
+    });
+  } else {
+    handler(level, log);
+  }
+};
 
 export async function createRollupOptions(options: Options): Promise<RollupOptions[]> {
   const {
@@ -131,6 +160,7 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
         input: rollupInput,
         output: [item],
         external: finalExternal,
+        onLog,
         plugins: [
           // 用户可控的前置插件（例如 alias/resolve）
           ...(pluginsRollup || []),
@@ -157,6 +187,7 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
       input: rollupInput,
       output: outputs,
       external: finalExternal,
+      onLog,
       plugins: [
         ...(pluginsRollup || []),
         ...(userPlugins || []),
