@@ -1,6 +1,6 @@
 {
   "name": "swiftlet",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Web dev build tool",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -36,13 +36,16 @@
     "compiled"
   ],
   "keywords": [
-    "frontend",
-    "hmr",
-    "dev-server",
     "build-tool",
     "bundler",
-    "bundling",
-    "swiftlet"
+    "rollup",
+    "typescript",
+    "library",
+    "esm",
+    "cjs",
+    "umd",
+    "dts",
+    "zero-config"
   ],
   "author": "GavinRay <gavinbirkhoff@gmail.com> (https://github.com/gvray)",
   "license": "MIT",
