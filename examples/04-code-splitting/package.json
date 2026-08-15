@@ -1,0 +1,10 @@
+{
+  "name": "swiftlet-example-04-code-splitting",
+  "description": "Swiftlet example: dynamic imports produce separate chunks",
+  "scripts": {
+    "build": "swiftlet build"
+  },
+  "devDependencies": {
+    "swiftlet": "workspace:*"
+  }
+}

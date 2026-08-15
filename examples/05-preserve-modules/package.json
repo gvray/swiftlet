@@ -1,0 +1,10 @@
+{
+  "name": "swiftlet-example-05-preserve-modules",
+  "description": "Swiftlet example: preserve source module directory structure",
+  "scripts": {
+    "build": "swiftlet build"
+  },
+  "devDependencies": {
+    "swiftlet": "workspace:*"
+  }
+}

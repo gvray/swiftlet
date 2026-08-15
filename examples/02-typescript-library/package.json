@@ -1,0 +1,10 @@
+{
+  "name": "swiftlet-example-02-typescript-library",
+  "description": "Swiftlet example: TypeScript library with declaration files",
+  "scripts": {
+    "build": "swiftlet build"
+  },
+  "devDependencies": {
+    "swiftlet": "workspace:*"
+  }
+}

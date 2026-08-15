@@ -1,0 +1,16 @@
+{
+  "name": "swiftlet-example-06-react-component-library",
+  "description": "Swiftlet example: React component library with JSX and external peer deps",
+  "scripts": {
+    "build": "swiftlet build"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "swiftlet": "workspace:*",
+    "react": "^18.3.1",
+    "@types/react": "^18.3.12",
+    "typescript": "^5.9.3"
+  }
+}

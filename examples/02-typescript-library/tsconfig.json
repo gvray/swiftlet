@@ -14,21 +14,9 @@
     "strict": true,
     "declaration": true,
     "skipLibCheck": true,
-    // "declarationDir": "./types"
-    // "outFile": "./",
-    // "allowJs": true,
-    // "checkJs": true,
-    // "jsx": "react-jsxdev",
-    // "declaration": false,
     "declarationMap": false,
     "sourceMap": false
-    // "downlevelIteration": true ,
-    // "importHelpers": true,
-    // "lib": [],
-    // "rootDirs": [],
-    // "typeRoots": [],
-    // "types": [],
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "swiftlet.config.ts"],
   "exclude": ["node_modules", "**/node_modules/*"]
 }

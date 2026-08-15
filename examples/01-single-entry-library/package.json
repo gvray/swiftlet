@@ -1,0 +1,10 @@
+{
+  "name": "swiftlet-example-01-single-entry-library",
+  "description": "Swiftlet example: single-entry JavaScript library",
+  "scripts": {
+    "build": "swiftlet build"
+  },
+  "devDependencies": {
+    "swiftlet": "workspace:*"
+  }
+}

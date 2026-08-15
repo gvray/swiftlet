@@ -42,6 +42,18 @@ const onLog = (level: LogLevel, log: RollupLog, handler: LogOrStringHandler) => 
   }
 };
 
+function isMultiEntry(entry: Options['entry']): boolean {
+  if (Array.isArray(entry)) return entry.length > 1;
+  if (entry && typeof entry === 'object') return Object.keys(entry).length > 0;
+  return false;
+}
+
+function isMultiFileMode(options: Options): boolean {
+  return (
+    options.splitting === true || options.preserveModules === true || isMultiEntry(options.entry)
+  );
+}
+
 export async function createRollupOptions(options: Options): Promise<RollupOptions[]> {
   const {
     entry,
@@ -57,6 +69,8 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
     globals,
     globalName,
     target,
+    preserveModules,
+    entryFileNames,
   } = options;
 
   // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -78,13 +92,20 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
     }
   };
 
-  const genOutput = (format: ModuleFormat): OutputOptions => {
+  const multiFileMode = isMultiFileMode(options);
+
+  /**
+   * 生成单个 format 的 Rollup output 配置
+   * @param fmt - 输出格式
+   * @param namedEntry - 仅在 UMD/IIFE 多入口时使用，表示当前入口的名称
+   */
+  const genOutput = (fmt: ModuleFormat, namedEntry?: string): OutputOptions => {
     const outputBase: OutputOptions = {
-      format,
-      file: `./${path.join(outDir as string, `${kebabCase(name)}.${fileSuffix(format)}.js`)}`,
+      format: fmt,
       sourcemap: sourcemap ?? false,
     };
-    if (format === 'umd' || format === 'iife') {
+
+    if (fmt === 'umd' || fmt === 'iife') {
       const out: OutputOptions = {
         ...outputBase,
         name: globalName ?? transformPackageName(name),
@@ -93,16 +114,43 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
       if (globals) {
         out.globals = globals;
       }
+
+      if (namedEntry) {
+        // UMD/IIFE 不支持多 chunk，多入口时每个入口独立生成一个文件
+        out.file = `./${path.join(outDir as string, `${namedEntry}.${fileSuffix(fmt)}.js`)}`;
+      } else if (multiFileMode) {
+        // 单入口但启用 splitting / preserveModules，UMD/IIFE 退化为单文件
+        out.file = `./${path.join(outDir as string, `${kebabCase(name)}.${fileSuffix(fmt)}.js`)}`;
+      } else {
+        out.file = `./${path.join(outDir as string, `${kebabCase(name)}.${fileSuffix(fmt)}.js`)}`;
+      }
       return out;
     }
-    return outputBase;
+
+    // esm / cjs
+    if (multiFileMode) {
+      const out: OutputOptions = {
+        ...outputBase,
+        dir: path.join(outDir as string, String(fmt)),
+        entryFileNames: entryFileNames ?? '[name].js',
+        chunkFileNames: '_shared/[name]-[hash].js',
+      };
+      if (preserveModules) {
+        out.preserveModules = true;
+      }
+      return out;
+    }
+
+    // 单文件模式（向后兼容）
+    return {
+      ...outputBase,
+      file: `./${path.join(outDir as string, `${kebabCase(name)}.${fileSuffix(fmt)}.js`)}`,
+    };
   };
 
   const normalizedFormats: ModuleFormat[] = Array.isArray(format)
     ? (format.map((f) => normalizeFormat(f)) as ModuleFormat[])
     : [normalizeFormat(format as unknown as string)];
-
-  const outputs: OutputOptions[] = normalizedFormats.map(genOutput);
 
   const innerPlugins: InputPluginOption[] = [];
   if (minify === true || minify === 'terser') {
@@ -111,9 +159,25 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
     // TODO: optional esbuild minification
   }
 
-  const configs: RollupOptions[] = [];
+  // 预生成 outputs 供 rollupOptions 钩子查看
+  const previewOutputs: OutputOptions[] = [];
+  for (const fmt of normalizedFormats) {
+    if ((fmt === 'umd' || fmt === 'iife') && isMultiEntry(entry)) {
+      const entries = Array.isArray(entry)
+        ? entry.map((e, i) => [`entry${i + 1}`, e] as [string, string])
+        : Object.entries(entry as Record<string, string>);
+      for (const [entryName] of entries) {
+        previewOutputs.push(genOutput(fmt, entryName));
+      }
+    } else {
+      previewOutputs.push(genOutput(fmt));
+    }
+  }
 
-  const appliedRollupOptions = rollupOptions?.({ input: entry, output: outputs } as RollupOptions);
+  const appliedRollupOptions = rollupOptions?.({
+    input: entry,
+    output: previewOutputs,
+  } as RollupOptions);
   const {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     output: _userOutput,
@@ -152,64 +216,91 @@ export async function createRollupOptions(options: Options): Promise<RollupOptio
       (external as RollupOptions['external']) ?? (userExternal as RollupOptions['external']);
   }
 
-  const rollupInput = entry;
+  // 统一构建插件列表
+  const buildPlugins = (): InputPluginOption[] => {
+    const plugins: InputPluginOption[] = [
+      // 用户可控的前置插件（例如 alias/resolve）
+      ...(pluginsRollup || []),
+    ];
 
-  if (isTypeScript()) {
-    outputs.forEach((item) => {
+    if (isTypeScript()) {
+      plugins.push(
+        typescript({
+          compilerOptions: {
+            declaration: false,
+            sourceMap: sourcemap ?? false,
+            ...(target ? { target } : {}),
+          },
+        })
+      );
+    }
+
+    plugins.push(
+      // 用户提供的 rollupOptions.plugins（通常用于后置如 babel）
+      ...(userPlugins || []),
+      // 压缩应尽量放在最后
+      ...innerPlugins
+    );
+
+    return plugins;
+  };
+
+  const configs: RollupOptions[] = [];
+
+  for (const fmt of normalizedFormats) {
+    const plugins = buildPlugins();
+
+    // UMD/IIFE 不支持多 chunk，多入口时需要拆成多个单 entry 的 config
+    if ((fmt === 'umd' || fmt === 'iife') && isMultiEntry(entry)) {
+      const entries = Array.isArray(entry)
+        ? entry.map((e, i) => [`entry${i + 1}`, e] as [string, string])
+        : Object.entries(entry as Record<string, string>);
+
+      for (const [entryName, entryPath] of entries) {
+        const cfg: RollupOptions = {
+          input: entryPath,
+          output: [genOutput(fmt, entryName)],
+          external: finalExternal,
+          onLog,
+          plugins,
+          ...restRollupOptions,
+          ...(watch ? ({ watch: {} } as RollupWatchOptions) : {}),
+        };
+        configs.push(cfg);
+      }
+    } else {
       const cfg: RollupOptions = {
-        input: rollupInput,
-        output: [item],
+        input: entry,
+        output: [genOutput(fmt)],
         external: finalExternal,
         onLog,
-        plugins: [
-          // 用户可控的前置插件（例如 alias/resolve）
-          ...(pluginsRollup || []),
-          // TypeScript 编译尽量靠前，让后续 JS 插件接收到已转译的代码
-          typescript({
-            compilerOptions: {
-              declaration: false,
-              sourceMap: sourcemap ?? false,
-              ...(target ? { target } : {}),
-            },
-          }),
-          // 用户提供的 rollupOptions.plugins（通常用于后置如 babel）
-          ...(userPlugins || []),
-          // 压缩应尽量放在最后
-          ...innerPlugins,
-        ],
+        plugins,
         ...restRollupOptions,
         ...(watch ? ({ watch: {} } as RollupWatchOptions) : {}),
       };
       configs.push(cfg);
-    });
-  } else {
-    const cfg: RollupOptions = {
-      input: rollupInput,
-      output: outputs,
-      external: finalExternal,
-      onLog,
-      plugins: [
-        ...(pluginsRollup || []),
-        ...(userPlugins || []),
-        // 压缩应尽量放在最后
-        ...innerPlugins,
-      ],
-      ...restRollupOptions,
-      ...(watch ? ({ watch: {} } as RollupWatchOptions) : {}),
-    };
-    configs.push(cfg);
+    }
   }
 
   if (genDts && isTypeScript()) {
     const dtsOutput: RollupOptions = {
-      input: rollupInput,
+      input: entry,
       plugins: [dts()],
-      output: [
-        {
-          format: 'esm' as ModuleFormat,
-          file: `${path.join(outDir as string, `${kebabCase(name)}.d.ts`)}`,
-        },
-      ],
+      output: multiFileMode
+        ? [
+            {
+              format: 'esm' as ModuleFormat,
+              dir: outDir as string,
+              preserveModules: true,
+              entryFileNames: (entryFileNames ?? '[name].js').replace(/\.js$/, '.d.ts'),
+            },
+          ]
+        : [
+            {
+              format: 'esm' as ModuleFormat,
+              file: `${path.join(outDir as string, `${kebabCase(name)}.d.ts`)}`,
+            },
+          ],
     };
     configs.push(dtsOutput);
   }
