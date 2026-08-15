@@ -47,4 +47,4 @@ export default {
 
   // Put each attribute on its own line for better readability
   singleAttributePerLine: true,
-}
+};

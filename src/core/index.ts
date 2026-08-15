@@ -1,4 +1,4 @@
-import Compiler from './Compiler'
-import createCompiler from './swiftlet'
+import Compiler from './Compiler';
+import createCompiler from './swiftlet';
 
-export { Compiler, createCompiler }
+export { Compiler, createCompiler };

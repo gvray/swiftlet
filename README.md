@@ -45,25 +45,25 @@ export default defineConfig({
 
 All options are optional with sensible defaults.
 
-| Option            | Type                                    | Default                          | Description                                      |
-| ----------------- | --------------------------------------- | -------------------------------- | ------------------------------------------------ |
-| `entry`           | `string \| string[]`                    | `src/index.ts` or `src/index.js` | Build entry point(s)                             |
-| `outDir`          | `string`                                | `'dist'`                         | Output directory                                 |
-| `format`          | `('esm' \| 'cjs' \| 'umd' \| 'iife')[]` | `['esm']`                        | Output format(s)                                 |
-| `dts`             | `boolean`                               | `true`                           | Generate TypeScript declarations                 |
-| `target`          | `string`                                | —                                | TypeScript compile target (e.g. `'esnext'`)      |
-| `sourcemap`       | `boolean`                               | `false`                          | Generate source maps                             |
-| `minify`          | `boolean \| 'terser'`                   | `false`                          | Minify output                                    |
-| `splitting`       | `boolean`                               | `false`                          | Enable code splitting / multi-file output        |
-| `preserveModules` | `boolean`                               | `false`                          | Preserve source module directory structure       |
-| `entryFileNames`  | `string`                                | `'[name].js'`                    | Entry chunk file name pattern in multi-file mode |
-| `external`        | `string[] \| (id: string) => boolean`   | —                                | External dependencies                            |
-| `clean`           | `boolean`                               | `true`                           | Clean output directory before build              |
-| `globalName`      | `string`                                | derived from package name        | UMD/IIFE global variable name                    |
-| `globals`         | `Record<string, string>`                | —                                | UMD/IIFE external globals mapping                |
-| `plugins`         | `SwiftletPlugin[]`                      | `[]`                             | Swiftlet plugins (compiler hooks)                |
-| `pluginsRollup`   | `RollupPlugin[]`                        | `[]`                             | Raw Rollup plugins                               |
-| `rollupOptions`   | `(config) => config`                    | —                                | Low-level Rollup config customization            |
+| Option            | Type                                    | Default                                              | Description                                      |
+| ----------------- | --------------------------------------- | ---------------------------------------------------- | ------------------------------------------------ |
+| `entry`           | `string \| string[]`                    | `src/index.ts` or `src/index.js`                     | Build entry point(s)                             |
+| `outDir`          | `string`                                | `'dist'`                                             | Output directory                                 |
+| `format`          | `('esm' \| 'cjs' \| 'umd' \| 'iife')[]` | `['esm']`                                            | Output format(s)                                 |
+| `dts`             | `boolean`                               | `true`                                               | Generate TypeScript declarations                 |
+| `target`          | `string`                                | — (falls back to `tsconfig.json` target, else `ES5`) | TypeScript compile target (e.g. `'esnext'`)      |
+| `sourcemap`       | `boolean`                               | `false`                                              | Generate source maps                             |
+| `minify`          | `boolean \| 'terser'`                   | `false`                                              | Minify output                                    |
+| `splitting`       | `boolean`                               | `false`                                              | Enable code splitting / multi-file output        |
+| `preserveModules` | `boolean`                               | `false`                                              | Preserve source module directory structure       |
+| `entryFileNames`  | `string`                                | `'[name].js'`                                        | Entry chunk file name pattern in multi-file mode |
+| `external`        | `string[] \| (id: string) => boolean`   | —                                                    | External dependencies                            |
+| `clean`           | `boolean`                               | `true`                                               | Clean output directory before build              |
+| `globalName`      | `string`                                | derived from package name                            | UMD/IIFE global variable name                    |
+| `globals`         | `Record<string, string>`                | —                                                    | UMD/IIFE external globals mapping                |
+| `plugins`         | `SwiftletPlugin[]`                      | `[]`                                                 | Swiftlet plugins (compiler hooks)                |
+| `pluginsRollup`   | `RollupPlugin[]`                        | `[]`                                                 | Raw Rollup plugins                               |
+| `rollupOptions`   | `(config) => config`                    | —                                                    | Low-level Rollup config customization            |
 
 ### Example: Full Configuration
 

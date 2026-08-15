@@ -1,29 +1,29 @@
-import { defineConfig } from 'lavy'
+import { defineConfig } from 'lavy';
 
 export default defineConfig({
-  "project": {
-    "language": "ts",
-    "framework": "none",
-    "style": "none",
-    "linter": "eslint",
-    "platform": "node"
+  project: {
+    language: 'ts',
+    framework: 'none',
+    style: 'none',
+    linter: 'eslint',
+    platform: 'node',
   },
-  "lint": {
-    "eslint": {
-      "enabled": true,
-      "config": "eslint.config.js"
+  lint: {
+    eslint: {
+      enabled: true,
+      config: 'eslint.config.js',
     },
-    "stylelint": {
-      "enabled": false,
-      "config": "stylelint.config.mjs"
+    stylelint: {
+      enabled: false,
+      config: 'stylelint.config.mjs',
     },
-    "prettier": {
-      "enabled": true,
-      "config": "prettier.config.mjs"
+    prettier: {
+      enabled: true,
+      config: 'prettier.config.mjs',
     },
-    "biome": {
-      "enabled": false,
-      "config": "biome.json"
-    }
-  }
-})
+    biome: {
+      enabled: false,
+      config: 'biome.json',
+    },
+  },
+});

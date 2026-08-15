@@ -45,25 +45,25 @@ export default defineConfig({
 
 所有配置项均为可选，具有合理的默认值。
 
-| 配置项            | 类型                                    | 默认值                           | 说明                                 |
-| ----------------- | --------------------------------------- | -------------------------------- | ------------------------------------ |
-| `entry`           | `string \| string[]`                    | `src/index.ts` 或 `src/index.js` | 构建入口                             |
-| `outDir`          | `string`                                | `'dist'`                         | 输出目录                             |
-| `format`          | `('esm' \| 'cjs' \| 'umd' \| 'iife')[]` | `['esm']`                        | 输出格式                             |
-| `dts`             | `boolean`                               | `true`                           | 生成 TypeScript 类型声明             |
-| `target`          | `string`                                | —                                | TypeScript 编译目标（如 `'esnext'`） |
-| `sourcemap`       | `boolean`                               | `false`                          | 生成 source map                      |
-| `minify`          | `boolean \| 'terser'`                   | `false`                          | 代码压缩                             |
-| `splitting`       | `boolean`                               | `false`                          | 启用代码分割 / 多文件输出            |
-| `preserveModules` | `boolean`                               | `false`                          | 保留源码模块目录结构                 |
-| `entryFileNames`  | `string`                                | `'[name].js'`                    | 多文件模式下 entry chunk 文件名模板  |
-| `external`        | `string[] \| (id: string) => boolean`   | —                                | 外部依赖                             |
-| `clean`           | `boolean`                               | `true`                           | 构建前清理输出目录                   |
-| `globalName`      | `string`                                | 从 package.json name 推导        | UMD/IIFE 全局变量名                  |
-| `globals`         | `Record<string, string>`                | —                                | UMD/IIFE 外部依赖映射                |
-| `plugins`         | `SwiftletPlugin[]`                      | `[]`                             | Swiftlet 插件（编译器钩子）          |
-| `pluginsRollup`   | `RollupPlugin[]`                        | `[]`                             | 原生 Rollup 插件                     |
-| `rollupOptions`   | `(config) => config`                    | —                                | 底层 Rollup 配置定制                 |
+| 配置项            | 类型                                    | 默认值                                                | 说明                                 |
+| ----------------- | --------------------------------------- | ----------------------------------------------------- | ------------------------------------ |
+| `entry`           | `string \| string[]`                    | `src/index.ts` 或 `src/index.js`                      | 构建入口                             |
+| `outDir`          | `string`                                | `'dist'`                                              | 输出目录                             |
+| `format`          | `('esm' \| 'cjs' \| 'umd' \| 'iife')[]` | `['esm']`                                             | 输出格式                             |
+| `dts`             | `boolean`                               | `true`                                                | 生成 TypeScript 类型声明             |
+| `target`          | `string`                                | —（优先继承 `tsconfig.json` 的 target，否则为 `ES5`） | TypeScript 编译目标（如 `'esnext'`） |
+| `sourcemap`       | `boolean`                               | `false`                                               | 生成 source map                      |
+| `minify`          | `boolean \| 'terser'`                   | `false`                                               | 代码压缩                             |
+| `splitting`       | `boolean`                               | `false`                                               | 启用代码分割 / 多文件输出            |
+| `preserveModules` | `boolean`                               | `false`                                               | 保留源码模块目录结构                 |
+| `entryFileNames`  | `string`                                | `'[name].js'`                                         | 多文件模式下 entry chunk 文件名模板  |
+| `external`        | `string[] \| (id: string) => boolean`   | —                                                     | 外部依赖                             |
+| `clean`           | `boolean`                               | `true`                                                | 构建前清理输出目录                   |
+| `globalName`      | `string`                                | 从 package.json name 推导                             | UMD/IIFE 全局变量名                  |
+| `globals`         | `Record<string, string>`                | —                                                     | UMD/IIFE 外部依赖映射                |
+| `plugins`         | `SwiftletPlugin[]`                      | `[]`                                                  | Swiftlet 插件（编译器钩子）          |
+| `pluginsRollup`   | `RollupPlugin[]`                        | `[]`                                                  | 原生 Rollup 插件                     |
+| `rollupOptions`   | `(config) => config`                    | —                                                     | 底层 Rollup 配置定制                 |
 
 ### 完整配置示例
 
